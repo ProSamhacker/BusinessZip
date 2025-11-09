@@ -4,24 +4,33 @@ import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, doc, updateDoc } from 'firebase/firestore';
 
 // Initialize Firebase Admin for server-side use
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+function getFirebaseApp(): { app: FirebaseApp; db: Firestore } | null {
+  const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  };
 
-let app: FirebaseApp;
-let db: Firestore;
+  // Only initialize if all required config values are present
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    return null;
+  }
 
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-} else {
-  app = getApps()[0];
-  db = getFirestore(app);
+  let app: FirebaseApp;
+  let db: Firestore;
+
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+  } else {
+    app = getApps()[0];
+    db = getFirestore(app);
+  }
+
+  return { app, db };
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -61,12 +70,17 @@ export async function POST(request: NextRequest) {
         const userId = session.metadata?.userId;
 
         if (userId) {
-          // Update user document in Firestore
-          await updateDoc(doc(db, 'users', userId), {
-            subscriptionTier: 'pro',
-            proStatus: 'active',
-            stripeCustomerId: session.customer as string,
-          });
+          const firebase = getFirebaseApp();
+          if (firebase) {
+            // Update user document in Firestore
+            await updateDoc(doc(firebase.db, 'users', userId), {
+              subscriptionTier: 'pro',
+              proStatus: 'active',
+              stripeCustomerId: session.customer as string,
+            });
+          } else {
+            console.error('Firebase not initialized - cannot update user subscription');
+          }
         }
         break;
       }
