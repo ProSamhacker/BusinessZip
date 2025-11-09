@@ -135,13 +135,16 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button
+                                    <button
                     onClick={() => {
-                      router.push(
-                        `/results?business=${encodeURIComponent(
-                          report.searchQuery.businessTerm
-                        )}&zip=${encodeURIComponent(report.searchQuery.value)}`
-                      );
+                      const { type, businessTerm, value, radius } = report.searchQuery;
+                      let url = `/results?business=${encodeURIComponent(businessTerm)}`;
+                      if (type === 'zipcode') {
+                        url += `&zip=${encodeURIComponent(value)}`;
+                      } else {
+                        url += `&address=${encodeURIComponent(value)}&radius=${radius}`;
+                      }
+                      router.push(url);
                     }}
                     className="flex-1 py-2 px-4 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
                   >

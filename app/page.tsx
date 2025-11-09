@@ -5,24 +5,42 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Home() {
+  const [searchType, setSearchType] = useState<'zipcode' | 'radius'>('zipcode');
   const [businessTerm, setBusinessTerm] = useState('');
   const [zipCode, setZipCode] = useState('');
+  const [address, setAddress] = useState('');
+  const [radiusMiles, setRadiusMiles] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!businessTerm.trim() || !zipCode.trim()) {
-      alert('Please fill in both fields');
+    if (!businessTerm.trim()) {
+      alert('Please enter a business type');
+      return;
+    }
+    
+    if (searchType === 'zipcode' && !zipCode.trim()) {
+      alert('Please enter a zip code');
+      return;
+    }
+    
+    if (searchType === 'radius' && !address.trim()) {
+      alert('Please enter an address');
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // Navigate to results page with query params
-      router.push(`/results?business=${encodeURIComponent(businessTerm)}&zip=${encodeURIComponent(zipCode)}`);
+      if (searchType === 'zipcode') {
+        // Navigate to results page with zip code query params
+        router.push(`/results?business=${encodeURIComponent(businessTerm)}&zip=${encodeURIComponent(zipCode)}`);
+      } else {
+        // Navigate to results page with address/radius query params
+        router.push(`/results?business=${encodeURIComponent(businessTerm)}&address=${encodeURIComponent(address)}&radius=${radiusMiles}`);
+      }
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred. Please try again.');
@@ -47,31 +65,59 @@ export default function Home() {
           
           <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
             Get instant insights on market opportunity, competition, and demographics 
-            for any US zip code. Make data-driven decisions before you invest.
+            for any US location. Make data-driven decisions before you invest.
           </p>
 
           {/* Search Form */}
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 mb-12">
+            {/* Search Type Tabs */}
+            <div className="flex gap-4 mb-6 border-b border-gray-200">
+              <button
+                type="button"
+                onClick={() => setSearchType('zipcode')}
+                className={`px-4 py-2 font-semibold transition ${
+                  searchType === 'zipcode'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Search by Zip Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchType('radius')}
+                className={`px-4 py-2 font-semibold transition ${
+                  searchType === 'radius'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Search by Address & Radius
+              </button>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label 
-                    htmlFor="businessTerm" 
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
-                    Business Type
-                  </label>
-                  <input
-                    id="businessTerm"
-                    type="text"
-                    value={businessTerm}
-                    onChange={(e) => setBusinessTerm(e.target.value)}
-                    placeholder="e.g., Coffee Shop, Gym, Restaurant"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    required
-                  />
-                </div>
-                
+              {/* Business Type - Always shown */}
+              <div>
+                <label 
+                  htmlFor="businessTerm" 
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
+                  Business Type
+                </label>
+                <input
+                  id="businessTerm"
+                  type="text"
+                  value={businessTerm}
+                  onChange={(e) => setBusinessTerm(e.target.value)}
+                  placeholder="e.g., Coffee Shop, Gym, Restaurant"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  required
+                />
+              </div>
+
+              {/* Zip Code Search */}
+              {searchType === 'zipcode' && (
                 <div>
                   <label 
                     htmlFor="zipCode" 
@@ -89,9 +135,59 @@ export default function Home() {
                     maxLength={5}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     required
+                    spellCheck="false"
                   />
                 </div>
-              </div>
+              )}
+
+              {/* Address & Radius Search */}
+              {searchType === 'radius' && (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label 
+                      htmlFor="address" 
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Address
+                    </label>
+                    <input
+                      id="address"
+                      type="text"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="e.g., 123 Main St, New York, NY 10001"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter a full address for best results
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label 
+                      htmlFor="radiusMiles" 
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Radius (miles)
+                    </label>
+                    <input
+                      id="radiusMiles"
+                      type="number"
+                      value={radiusMiles}
+                      onChange={(e) => setRadiusMiles(parseFloat(e.target.value) || 1)}
+                      min="0.1"
+                      max="50"
+                      step="0.1"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Search radius in miles (0.1 - 50)
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <button
                 type="submit"

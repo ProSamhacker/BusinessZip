@@ -19,6 +19,9 @@ export interface ReportData {
   opportunityScore: string;
   opportunityValue?: number; // For sorting/comparison
   competitorLocations?: Array<{ lat: number; lon: number }>;
+  searchLocation?: string; // The location that was searched
+  coordinates?: { lat: number; lon: number } | null; // For radius searches
+  searchType?: 'zipcode' | 'radius'; // Track search type
 }
 
 export interface SavedReport {

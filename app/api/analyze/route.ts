@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCensusData } from '@/lib/api/census';
-import { getCompetitorData } from '@/lib/api/overpass';
+import { getCompetitorData, getCompetitorDataByRadius, milesToMeters } from '@/lib/api/overpass';
+import { geocodeAddress } from '@/lib/api/geocoding';
 
 // Simple in-memory cache for API responses
 // This prevents rate limiting by caching responses for 1 hour
@@ -31,26 +32,16 @@ function getCached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { businessTerm, zipCode } = body;
+    const { businessTerm, zipCode, address, radiusMiles } = body;
     
-    // Validate input
-    if (!businessTerm || !zipCode) {
+    // Validate business term (required for both search types)
+    if (!businessTerm) {
       return NextResponse.json(
-        { error: 'Business term and zip code are required' },
+        { error: 'Business term is required' },
         { status: 400 }
       );
     }
 
-    // Validate zip code format (5 digits)
-    const zipRegex = /^[0-9]{5}$/;
-    if (!zipRegex.test(zipCode)) {
-      return NextResponse.json(
-        { error: 'Valid 5-digit zip code is required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate business term (not empty, reasonable length)
     const trimmedBusinessTerm = businessTerm.trim();
     if (trimmedBusinessTerm.length === 0 || trimmedBusinessTerm.length > 100) {
       return NextResponse.json(
@@ -58,17 +49,86 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
-    // Create cache keys
-    const censusCacheKey = `census-${zipCode}`;
-    const competitorCacheKey = `competitor-${zipCode}-${trimmedBusinessTerm.toLowerCase()}`;
-    
-    // Fetch data from both APIs in parallel with caching
-    // This prevents rate limiting by caching responses for 1 hour
-    const [censusData, competitorData] = await Promise.all([
-      getCached(censusCacheKey, () => getCensusData(zipCode)),
-      getCached(competitorCacheKey, () => getCompetitorData(zipCode, trimmedBusinessTerm, true)),
-    ]);
+
+    // Determine search type: radius-based (address) or zip code
+    let censusData: any;
+    let competitorData: any;
+    let searchLocation: string;
+    let coordinates: { lat: number; lon: number } | null = null;
+
+    if (address) {
+      // Radius-based search using address
+      if (!radiusMiles || radiusMiles <= 0 || radiusMiles > 50) {
+        return NextResponse.json(
+          { error: 'Radius must be between 0.1 and 50 miles' },
+          { status: 400 }
+        );
+      }
+
+      // Geocode the address
+      const geocodeResult = await getCached(
+        `geocode-${address.toLowerCase()}`,
+        () => geocodeAddress(address)
+      );
+      
+      coordinates = { lat: geocodeResult.lat, lon: geocodeResult.lon };
+      searchLocation = geocodeResult.displayName;
+      
+      // For radius search, we need to get census data for the zip code of the geocoded location
+      // We'll try to extract zip code from the display name, or use a nearby zip code
+      // For now, we'll use a simplified approach: get census data for a nearby zip code
+      // In a production app, you might want to reverse geocode to get the zip code
+      const radiusMeters = milesToMeters(radiusMiles);
+      
+      const competitorCacheKey = `competitor-radius-${geocodeResult.lat}-${geocodeResult.lon}-${radiusMeters}-${trimmedBusinessTerm.toLowerCase()}`;
+      
+      competitorData = await getCached(
+        competitorCacheKey,
+        () => getCompetitorDataByRadius(
+          geocodeResult.lat,
+          geocodeResult.lon,
+          radiusMeters,
+          trimmedBusinessTerm,
+          true
+        )
+      );
+      
+      // For radius search, we'll estimate population based on radius
+      // This is a simplified approach - in production, you might want to use a different method
+      const estimatedPopulation = Math.round(Math.PI * radiusMiles * radiusMiles * 5000); // Rough estimate
+      const estimatedIncome = 60000; // Default estimate
+      
+      censusData = {
+        population: estimatedPopulation,
+        medianIncome: estimatedIncome,
+      };
+    } else if (zipCode) {
+      // Zip code-based search (legacy method)
+      const zipRegex = /^[0-9]{5}$/;
+      if (!zipRegex.test(zipCode)) {
+        return NextResponse.json(
+          { error: 'Valid 5-digit zip code is required' },
+          { status: 400 }
+        );
+      }
+
+      searchLocation = zipCode;
+      
+      // Create cache keys
+      const censusCacheKey = `census-${zipCode}`;
+      const competitorCacheKey = `competitor-${zipCode}-${trimmedBusinessTerm.toLowerCase()}`;
+      
+      // Fetch data from both APIs in parallel with caching
+      [censusData, competitorData] = await Promise.all([
+        getCached(censusCacheKey, () => getCensusData(zipCode)),
+        getCached(competitorCacheKey, () => getCompetitorData(zipCode, trimmedBusinessTerm, true)),
+      ]);
+    } else {
+      return NextResponse.json(
+        { error: 'Either zip code or address is required' },
+        { status: 400 }
+      );
+    }
     
     // Calculate opportunity score with improved algorithm
     const competitorCount = competitorData.count || 0;
@@ -100,6 +160,9 @@ export async function POST(request: NextRequest) {
       opportunityScore,
       opportunityValue, // For sorting/comparison
       competitorLocations: competitorData.locations,
+      searchLocation, // The location that was searched
+      coordinates, // For radius searches
+      searchType: address ? 'radius' : 'zipcode', // Track search type
     };
     
     return NextResponse.json(reportData);

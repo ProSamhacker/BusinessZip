@@ -10,10 +10,14 @@ export interface CensusData {
 
 export async function getCensusData(zipCode: string): Promise<CensusData> {
   try {
-    // Using Census Bureau API - American Community Survey 5-Year Estimates
-    // Note: You'll need to get an API key from https://api.census.gov/data/key_signup.html
+        const apiKey = process.env.CENSUS_API_KEY;
+    if (!apiKey) {
+      // This check prevents the app from running without a critical environment variable.
+      // It provides a clear error message for developers during setup.
+      throw new Error('Server configuration error: CENSUS_API_KEY is not set in .env.local');
+    }
     
-    const apiKey = process.env.CENSUS_API_KEY || '';
+    // Using Census Bureau API - American Community Survey 5-Year Estimates
     const year = '2022'; // Latest available year
     
     // Get population data
@@ -40,8 +44,9 @@ export async function getCensusData(zipCode: string): Promise<CensusData> {
     const population = parseInt(populationData[1]?.[0] || '0', 10);
     const medianIncome = parseInt(incomeData[1]?.[0] || '0', 10);
     
-    if (population === 0 || medianIncome === 0) {
-      throw new Error('Invalid or missing census data for zip code');
+        if (population === 0 || medianIncome === 0) {
+      // This can happen for valid but non-residential zip codes (e.g., a PO Box zip)
+      throw new Error(`No census data found for zip code ${zipCode}. It may be invalid or non-residential.`);
     }
 
     return {

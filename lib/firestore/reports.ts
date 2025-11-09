@@ -7,6 +7,7 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { SavedReport, SearchQuery, ReportData } from '../firebase/types';
@@ -43,7 +44,11 @@ export async function getUserReports(userId: string): Promise<SavedReport[]> {
       return [];
     }
     
-    const q = query(collection(db, 'savedReports'), where('userId', '==', userId));
+    const q = query(
+      collection(db, 'savedReports'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
     const querySnapshot = await getDocs(q);
     
     return querySnapshot.docs.map((doc) => ({
