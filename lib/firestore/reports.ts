@@ -18,6 +18,10 @@ export async function saveReport(
   reportData: ReportData
 ): Promise<{ success: boolean; error?: string; docId?: string }> {
   try {
+    if (!db) {
+      return { success: false, error: 'Firestore is not initialized. This function must be called on the client side.' };
+    }
+    
     const docRef = await addDoc(collection(db, 'savedReports'), {
       userId,
       reportName,
@@ -34,6 +38,11 @@ export async function saveReport(
 
 export async function getUserReports(userId: string): Promise<SavedReport[]> {
   try {
+    if (!db) {
+      console.error('Firestore is not initialized');
+      return [];
+    }
+    
     const q = query(collection(db, 'savedReports'), where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
     
@@ -49,6 +58,10 @@ export async function getUserReports(userId: string): Promise<SavedReport[]> {
 
 export async function deleteReport(reportId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!db) {
+      return { success: false, error: 'Firestore is not initialized. This function must be called on the client side.' };
+    }
+    
     await deleteDoc(doc(db, 'savedReports', reportId));
     return { success: true };
   } catch (error: any) {
