@@ -82,14 +82,13 @@ export async function POST(request: NextRequest) {
       
       const competitorCacheKey = `competitor-radius-${geocodeResult.lat}-${geocodeResult.lon}-${radiusMeters}-${trimmedBusinessTerm.toLowerCase()}`;
       
-      competitorData = await getCached(
+            competitorData = await getCached(
         competitorCacheKey,
         () => getCompetitorDataByRadius(
           geocodeResult.lat,
           geocodeResult.lon,
           radiusMeters,
-          trimmedBusinessTerm,
-          true
+          trimmedBusinessTerm
         )
       );
       
@@ -119,9 +118,9 @@ export async function POST(request: NextRequest) {
       const competitorCacheKey = `competitor-${zipCode}-${trimmedBusinessTerm.toLowerCase()}`;
       
       // Fetch data from both APIs in parallel with caching
-      [censusData, competitorData] = await Promise.all([
+            [censusData, competitorData] = await Promise.all([
         getCached(censusCacheKey, () => getCensusData(zipCode)),
-        getCached(competitorCacheKey, () => getCompetitorData(zipCode, trimmedBusinessTerm, true)),
+        getCached(competitorCacheKey, () => getCompetitorData(zipCode, trimmedBusinessTerm)),
       ]);
     } else {
       return NextResponse.json(

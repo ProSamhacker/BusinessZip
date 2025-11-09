@@ -1,7 +1,9 @@
 /**
- * OpenStreetMap Overpass API integration
- * Fetches competitor data for a given zip code and business type
+ * OpenStreetMap Overpass API integration.
+ * Fetches competitor data for a given location and business type.
  */
+
+// --- TYPE DEFINITIONS ---
 
 export interface CompetitorLocation {
   lat: number;
@@ -10,304 +12,218 @@ export interface CompetitorLocation {
 
 export interface CompetitorData {
   count: number;
-  locations?: CompetitorLocation[];
+  locations: CompetitorLocation[];
 }
 
-// Map business terms to OSM amenity tags
+// Overpass API returns a complex object, so we define types for what we need.
+interface OverpassElement {
+  type: 'node' | 'way';
+  id: number;
+  lat?: number;
+  lon?: number;
+  geometry?: { lat: number; lon: number }[];
+}
+
+interface OverpassResponse {
+  elements: OverpassElement[];
+}
+
+
+// --- CONFIGURATION ---
+
+const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
+
+// Maps common business terms to OpenStreetMap 'amenity' tags.
 const businessTypeMap: Record<string, string> = {
   'coffee shop': 'cafe',
   'coffee': 'cafe',
   'cafe': 'cafe',
-  'coffeeshop': 'cafe',
-  'coffeehouse': 'cafe',
   'restaurant': 'restaurant',
-  'restaurants': 'restaurant',
-  'dining': 'restaurant',
   'gym': 'gym',
   'fitness': 'gym',
-  'fitness center': 'gym',
-  'fitnesscentre': 'gym',
-  'bookstore': 'library',
-  'book store': 'library',
-  'books': 'library',
+  'bookstore': 'books',
   'pharmacy': 'pharmacy',
-  'pharmacies': 'pharmacy',
   'drugstore': 'pharmacy',
   'gas station': 'fuel',
-  'gas': 'fuel',
-  'fuel': 'fuel',
-  'gasoline': 'fuel',
   'hotel': 'hotel',
-  'hotels': 'hotel',
   'bank': 'bank',
-  'banks': 'bank',
   'supermarket': 'supermarket',
-  'grocery': 'supermarket',
   'grocery store': 'supermarket',
-  'groceries': 'supermarket',
   'bar': 'bar',
-  'bars': 'bar',
   'pub': 'bar',
-  'pubs': 'bar',
   'clinic': 'clinic',
-  'clinics': 'clinic',
   'hospital': 'hospital',
-  'hospitals': 'hospital',
 };
 
+
+// --- HELPER FUNCTIONS ---
+
 /**
- * Fuzzy search for business type - finds closest match in businessTypeMap
- * Uses simple string similarity (Levenshtein-like approach)
+ * Converts a distance in miles to meters for the Overpass API.
+ * @param miles - The distance in miles.
+ * @returns The distance in meters.
  */
-function findClosestMatch(term: string): string | null {
-  const normalized = term.toLowerCase().trim();
+export function milesToMeters(miles: number): number {
+  return Math.round(miles * 1609.34);
+}
+
+/**
+ * Performs a fuzzy search to find the best OSM amenity tag for a given business term.
+ * @param term - The user-provided business term (e.g., "coffee place").
+ * @returns The corresponding OSM amenity tag (e.g., "cafe") or a normalized version of the term.
+ */
+function getAmenityTag(businessTerm: string): string {
+  const normalized = businessTerm.toLowerCase().trim();
   
-  // Exact match
+  // 1. Exact match
   if (businessTypeMap[normalized]) {
     return businessTypeMap[normalized];
   }
-  
-  // Remove common words and try again
-  const cleaned = normalized
-    .replace(/\b(shop|store|center|centre|place|location)\b/g, '')
-    .trim();
-  
-  if (cleaned && businessTypeMap[cleaned]) {
-    return businessTypeMap[cleaned];
-  }
-  
-  // Try partial matches (contains)
+
+  // 2. Partial match (e.g., "coffee" in "coffee shop")
   for (const [key, value] of Object.entries(businessTypeMap)) {
     if (normalized.includes(key) || key.includes(normalized)) {
       return value;
     }
   }
-  
-  // Try word-by-word matching
-  const words = normalized.split(/\s+/);
-  for (const word of words) {
-    if (word.length > 2) { // Ignore very short words
-      for (const [key, value] of Object.entries(businessTypeMap)) {
-        if (key.includes(word) || word.includes(key)) {
-          return value;
-        }
-      }
-    }
-  }
-  
-  return null;
-}
 
-function getAmenityTag(businessTerm: string): string {
-  const match = findClosestMatch(businessTerm);
-  if (match) {
-    return match;
-  }
-  
-  // Fallback: use normalized term (might work for some OSM tags)
-  return businessTerm.toLowerCase().trim();
+  // 3. Fallback to the normalized term itself
+  return normalized;
 }
 
 /**
- * Get competitor data by zip code (legacy method)
+ * Parses the elements from an Overpass API response into a standard format.
+ * @param elements - The array of elements from the Overpass API.
+ * @returns A list of competitor locations.
  */
-export async function getCompetitorData(
-  zipCode: string,
-  businessTerm: string,
-  includeLocations: boolean = false
-): Promise<CompetitorData> {
-  try {
-    const amenity = getAmenityTag(businessTerm);
-    const overpassUrl = 'https://overpass-api.de/api/interpreter';
-    
-    // First, get the area ID for the zip code
-    const areaQuery = `
-      [out:json];
-      relation["postal_code"="${zipCode}"];
-      out body;
-    `;
-    
-    const areaRes = await fetch(overpassUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(areaQuery)}`,
-    });
-    
-    if (!areaRes.ok) {
-      throw new Error('Failed to fetch area data from Overpass API');
-    }
-    
-    const areaData = await areaRes.json();
-    
-    if (!areaData.elements || areaData.elements.length === 0) {
-      return { count: 0, locations: [] };
-    }
-    
-    const areaId = areaData.elements[0].id;
-    
-    // Now query for businesses in that area
-    let businessQuery: string;
-    
-    if (includeLocations) {
-      // Get locations for map display
-      businessQuery = `
-        [out:json];
-        area(${areaId});
-        (
-          node["amenity"="${amenity}"](area);
-          way["amenity"="${amenity}"](area);
-        );
-        out geom;
-      `;
-    } else {
-      // Just get count
-      businessQuery = `
-        [out:json];
-        area(${areaId});
-        (
-          node["amenity"="${amenity}"](area);
-          way["amenity"="${amenity}"](area);
-        );
-        out count;
-      `;
-    }
-    
-    const businessRes = await fetch(overpassUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(businessQuery)}`,
-    });
-    
-    if (!businessRes.ok) {
-      throw new Error('Failed to fetch competitor data from Overpass API');
-    }
-    
-    const businessData = await businessRes.json();
-    
-    if (includeLocations && businessData.elements) {
-      const locations: CompetitorLocation[] = businessData.elements
-        .map((element: any) => {
-          if (element.type === 'node') {
-            return { lat: element.lat, lon: element.lon };
-          } else if (element.type === 'way' && element.geometry) {
-            // For ways, use the first point
-            const firstPoint = element.geometry[0];
-            return { lat: firstPoint.lat, lon: firstPoint.lon };
-          }
-          return null;
-        })
-        .filter((loc: CompetitorLocation | null) => loc !== null);
-      
-      return {
-        count: locations.length,
-        locations,
-      };
-    }
-    
-    // Parse count from response
-    const count = businessData.elements?.length || 0;
-    
-    return {
-      count,
-      locations: includeLocations ? [] : undefined,
-    };
-  } catch (error) {
-    console.error('Error fetching competitor data:', error);
-    // Re-throw the error so the calling code can handle it properly
-    throw error instanceof Error ? error : new Error('Failed to fetch competitor data from Overpass API');
-  }
+function parseCompetitorLocations(elements: OverpassElement[]): CompetitorLocation[] {
+  return elements
+    .map((element) => {
+      if (element.type === 'node' && element.lat && element.lon) {
+        return { lat: element.lat, lon: element.lon };
+      }
+      if (element.type === 'way' && element.geometry && element.geometry.length > 0) {
+        // Use the first coordinate for a 'way' (e.g., a building outline)
+        return { lat: element.geometry[0].lat, lon: element.geometry[0].lon };
+      }
+      return null;
+    })
+    .filter((loc): loc is CompetitorLocation => loc !== null);
 }
 
 /**
- * Get competitor data by radius (coordinates + radius in meters)
- * This is the superior method compared to zip code boundary search
- * 
- * @param lat - Latitude coordinate
- * @param lon - Longitude coordinate
- * @param radiusMeters - Radius in meters (default: 1609 = 1 mile)
- * @param businessTerm - Business type to search for
- * @param includeLocations - Whether to include location coordinates
+ * Executes a query against the Overpass API.
+ * @param query - The Overpass QL query string.
+ * @returns The parsed JSON response from the API.
+ */
+async function executeOverpassQuery<T>(query: string): Promise<T> {
+  const response = await fetch(OVERPASS_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `data=${encodeURIComponent(query)}`,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Overpass API error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+
+// --- MAIN EXPORTED FUNCTIONS ---
+
+/**
+ * Fetches competitor data within a specific radius from a central point.
+ * @param lat - The latitude of the search center.
+ * @param lon - The longitude of the search center.
+ * @param radiusMeters - The search radius in meters.
+ * @param businessTerm - The type of business to search for.
+ * @returns A promise that resolves to the competitor data.
  */
 export async function getCompetitorDataByRadius(
   lat: number,
   lon: number,
   radiusMeters: number,
-  businessTerm: string,
-  includeLocations: boolean = false
+  businessTerm: string
 ): Promise<CompetitorData> {
   try {
     const amenity = getAmenityTag(businessTerm);
-    const overpassUrl = 'https://overpass-api.de/api/interpreter';
     
-    // Use Overpass 'around' query for radius-based search
-    // Format: (around:radius,lat,lon)
-    let businessQuery: string;
-    
-    if (includeLocations) {
-      // Get locations for map display
-      businessQuery = `
-        [out:json];
-        (
-          node["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
-          way["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
-        );
-        out geom;
-      `;
-    } else {
-      // Just get count
-      businessQuery = `
-        [out:json];
-        (
-          node["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
-          way["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
-        );
-        out count;
-      `;
-    }
-    
-    const businessRes = await fetch(overpassUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(businessQuery)}`,
-    });
-    
-    if (!businessRes.ok) {
-      throw new Error('Failed to fetch competitor data from Overpass API');
-    }
-    
-    const businessData = await businessRes.json();
-    
-    if (includeLocations && businessData.elements) {
-      const locations: CompetitorLocation[] = businessData.elements
-        .map((element: any) => {
-          if (element.type === 'node') {
-            return { lat: element.lat, lon: element.lon };
-          } else if (element.type === 'way' && element.geometry) {
-            // For ways, use the first point
-            const firstPoint = element.geometry[0];
-            return { lat: firstPoint.lat, lon: firstPoint.lon };
-          }
-          return null;
-        })
-        .filter((loc: CompetitorLocation | null) => loc !== null);
-      
-      return {
-        count: locations.length,
-        locations,
-      };
-    }
-    
-    // Parse count from response
-    const count = businessData.elements?.length || 0;
-    
+    // This query finds all nodes and ways with the specified amenity tag within the given radius.
+    const query = `
+      [out:json];
+      (
+        node["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
+        way["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
+      );
+      out geom;
+    `;
+
+    const data = await executeOverpassQuery<OverpassResponse>(query);
+    const locations = parseCompetitorLocations(data.elements);
+
     return {
-      count,
-      locations: includeLocations ? [] : undefined,
+      count: locations.length,
+      locations,
     };
   } catch (error) {
     console.error('Error fetching competitor data by radius:', error);
-    // Re-throw the error so the calling code can handle it properly
-    throw error instanceof Error ? error : new Error('Failed to fetch competitor data from Overpass API');
+    throw new Error('Failed to fetch competitor data from Overpass API.');
   }
 }
+
+/**
+ * Fetches competitor data within the boundary of a given zip code.
+ * NOTE: This method is less precise than radius search and is kept for legacy purposes.
+ * @param zipCode - The 5-digit zip code.
+ * @param businessTerm - The type of business to search for.
+ * @returns A promise that resolves to the competitor data.
+ */
+export async function getCompetitorData(
+  zipCode: string,
+  businessTerm: string
+): Promise<CompetitorData> {
+  try {
+    const amenity = getAmenityTag(businessTerm);
+
+    // 1. Find the official "area" ID for the given zip code from OpenStreetMap.
+    const areaQuery = `
+      [out:json];
+      relation["postal_code"="${zipCode}"];
+      out body;
+    `;
+    const areaData = await executeOverpassQuery<OverpassResponse>(areaQuery);
+    
+    if (!areaData.elements || areaData.elements.length === 0) {
+      console.warn(`No area found for zip code: ${zipCode}`);
+      return { count: 0, locations: [] };
+    }
+    
+    // The area ID needs to be increased by this specific number for use in subsequent queries.
+    const areaId = areaData.elements[0].id + 3600000000;
+
+    // 2. Find all competitors within that specific area.
+    const competitorQuery = `
+      [out:json];
+      area(${areaId});
+      (
+        node["amenity"="${amenity}"](area);
+        way["amenity"="${amenity}"](area);
+      );
+      out geom;
+    `;
+    const competitorData = await executeOverpassQuery<OverpassResponse>(competitorQuery);
+    const locations = parseCompetitorLocations(competitorData.elements);
+
+    return {
+      count: locations.length,
+      locations,
+    };
+  } catch (error) {
+    console.error(`Error fetching competitor data for zip ${zipCode}:`, error);
+    throw new Error('Failed to fetch competitor data from Overpass API.');
+  }
+}
+
 
