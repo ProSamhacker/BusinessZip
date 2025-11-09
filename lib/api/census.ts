@@ -40,19 +40,18 @@ export async function getCensusData(zipCode: string): Promise<CensusData> {
     const population = parseInt(populationData[1]?.[0] || '0', 10);
     const medianIncome = parseInt(incomeData[1]?.[0] || '0', 10);
     
+    if (population === 0 || medianIncome === 0) {
+      throw new Error('Invalid or missing census data for zip code');
+    }
+
     return {
-      population: population || 0,
-      medianIncome: medianIncome || 0,
+      population,
+      medianIncome,
     };
   } catch (error) {
     console.error('Error fetching census data:', error);
-    
-    // Fallback: Return mock data for development
-    // In production, you should handle this error properly
-    return {
-      population: 0,
-      medianIncome: 0,
-    };
+    // Re-throw the error so the calling code can handle it properly
+    throw error instanceof Error ? error : new Error('Failed to fetch census data');
   }
 }
 

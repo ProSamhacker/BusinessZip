@@ -17,6 +17,7 @@ export interface ReportData {
   population: number;
   medianIncome: number;
   opportunityScore: string;
+  opportunityValue?: number; // For sorting/comparison
   competitorLocations?: Array<{ lat: number; lon: number }>;
 }
 

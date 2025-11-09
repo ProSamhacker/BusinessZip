@@ -18,27 +18,94 @@ const businessTypeMap: Record<string, string> = {
   'coffee shop': 'cafe',
   'coffee': 'cafe',
   'cafe': 'cafe',
+  'coffeeshop': 'cafe',
+  'coffeehouse': 'cafe',
   'restaurant': 'restaurant',
+  'restaurants': 'restaurant',
+  'dining': 'restaurant',
   'gym': 'gym',
   'fitness': 'gym',
+  'fitness center': 'gym',
+  'fitnesscentre': 'gym',
   'bookstore': 'library',
   'book store': 'library',
+  'books': 'library',
   'pharmacy': 'pharmacy',
+  'pharmacies': 'pharmacy',
+  'drugstore': 'pharmacy',
   'gas station': 'fuel',
   'gas': 'fuel',
+  'fuel': 'fuel',
+  'gasoline': 'fuel',
   'hotel': 'hotel',
+  'hotels': 'hotel',
   'bank': 'bank',
+  'banks': 'bank',
   'supermarket': 'supermarket',
   'grocery': 'supermarket',
+  'grocery store': 'supermarket',
+  'groceries': 'supermarket',
   'bar': 'bar',
+  'bars': 'bar',
   'pub': 'bar',
+  'pubs': 'bar',
   'clinic': 'clinic',
+  'clinics': 'clinic',
   'hospital': 'hospital',
+  'hospitals': 'hospital',
 };
 
+/**
+ * Fuzzy search for business type - finds closest match in businessTypeMap
+ * Uses simple string similarity (Levenshtein-like approach)
+ */
+function findClosestMatch(term: string): string | null {
+  const normalized = term.toLowerCase().trim();
+  
+  // Exact match
+  if (businessTypeMap[normalized]) {
+    return businessTypeMap[normalized];
+  }
+  
+  // Remove common words and try again
+  const cleaned = normalized
+    .replace(/\b(shop|store|center|centre|place|location)\b/g, '')
+    .trim();
+  
+  if (cleaned && businessTypeMap[cleaned]) {
+    return businessTypeMap[cleaned];
+  }
+  
+  // Try partial matches (contains)
+  for (const [key, value] of Object.entries(businessTypeMap)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return value;
+    }
+  }
+  
+  // Try word-by-word matching
+  const words = normalized.split(/\s+/);
+  for (const word of words) {
+    if (word.length > 2) { // Ignore very short words
+      for (const [key, value] of Object.entries(businessTypeMap)) {
+        if (key.includes(word) || word.includes(key)) {
+          return value;
+        }
+      }
+    }
+  }
+  
+  return null;
+}
+
 function getAmenityTag(businessTerm: string): string {
-  const normalized = businessTerm.toLowerCase().trim();
-  return businessTypeMap[normalized] || normalized;
+  const match = findClosestMatch(businessTerm);
+  if (match) {
+    return match;
+  }
+  
+  // Fallback: use normalized term (might work for some OSM tags)
+  return businessTerm.toLowerCase().trim();
 }
 
 export async function getCompetitorData(
@@ -143,7 +210,8 @@ export async function getCompetitorData(
     };
   } catch (error) {
     console.error('Error fetching competitor data:', error);
-    return { count: 0, locations: [] };
+    // Re-throw the error so the calling code can handle it properly
+    throw error instanceof Error ? error : new Error('Failed to fetch competitor data from Overpass API');
   }
 }
 
