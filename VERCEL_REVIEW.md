@@ -21,8 +21,6 @@ The application is well-structured and ready for Vercel deployment with minor co
 
 3. **API Routes**
    - ✅ `/api/analyze` - Properly handles errors
-   - ✅ `/api/stripe/create-checkout` - Correctly configured
-   - ✅ `/api/stripe/webhook` - Handles raw body correctly
 
 4. **Firebase Integration**
    - ✅ Client-side initialization with window check
@@ -43,11 +41,6 @@ The application is well-structured and ready for Vercel deployment with minor co
 
 2. **Vercel Configuration** ✅ ADDED
    - Created `vercel.json` for function configuration
-   - Set max duration for webhook route
-
-3. **Stripe URL Handling** ✅ FIXED
-   - Improved URL detection for Vercel
-   - Added fallback to VERCEL_URL environment variable
 
 ### 📝 Required Actions Before Deployment
 
@@ -60,21 +53,12 @@ The application is well-structured and ready for Vercel deployment with minor co
    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
    NEXT_PUBLIC_FIREBASE_APP_ID
    CENSUS_API_KEY
-   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (if using Stripe)
-   STRIPE_SECRET_KEY (if using Stripe)
-   STRIPE_WEBHOOK_SECRET (if using Stripe)
-   STRIPE_PRICE_ID (if using Stripe)
    ```
 
 2. **Firebase Configuration:**
    - Add Vercel domain to Firebase authorized domains
    - Deploy Firestore security rules
    - Verify authentication providers enabled
-
-3. **Stripe Configuration (if using Pro tier):**
-   - Create product and price in Stripe Dashboard
-   - Configure webhook endpoint: `https://your-app.vercel.app/api/stripe/webhook`
-   - Subscribe to required webhook events
 
 ## 🚀 Deployment Steps
 
@@ -93,7 +77,6 @@ The application is well-structured and ready for Vercel deployment with minor co
 
 3. **Post-Deployment**
    - Update Firebase authorized domains
-   - Update Stripe webhook URL
    - Test all functionality
 
 ## 📊 File Structure Review
@@ -136,9 +119,9 @@ The application is production-ready with:
 ## 🔍 Testing Recommendations
 
 After deployment, test:
-1. Free tier search functionality
+1. Search functionality
 2. Authentication (email and Google)
-3. Pro tier features (if Stripe configured)
+3. All features (save reports, maps, PDF download)
 4. API routes
 5. Error handling
 6. Mobile responsiveness

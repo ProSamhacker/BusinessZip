@@ -5,7 +5,7 @@ import { getCompetitorData } from '@/lib/api/overpass';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { businessTerm, zipCode, includeLocations = false } = body;
+    const { businessTerm, zipCode } = body;
     
     if (!businessTerm || !zipCode) {
       return NextResponse.json(
@@ -14,10 +14,10 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Fetch data from both APIs in parallel
+    // Fetch data from both APIs in parallel - always include locations
     const [censusData, competitorData] = await Promise.all([
       getCensusData(zipCode),
-      getCompetitorData(zipCode, businessTerm, includeLocations),
+      getCompetitorData(zipCode, businessTerm, true),
     ]);
     
     // Calculate opportunity score

@@ -4,14 +4,12 @@ A SaaS web application that provides instant insights on business viability for 
 
 ## Features
 
-### Free Tier
+### Features
 - ✅ Search by business type and zip code
 - ✅ Get demographic data (population, median income)
 - ✅ View competitor count
 - ✅ Calculate opportunity score
 - ✅ View detailed analysis reports
-
-### Pro Tier
 - ✅ Save and compare reports
 - ✅ Interactive maps with competitor locations
 - ✅ Download PDF reports
@@ -25,7 +23,6 @@ A SaaS web application that provides instant insights on business viability for 
 - **Backend:** Next.js API Routes
 - **Database:** Firebase Firestore
 - **Authentication:** Firebase Auth
-- **Payments:** Stripe (for Pro tier)
 - **APIs:**
   - U.S. Census Bureau API (demographics)
   - OpenStreetMap Overpass API (competitor data)
@@ -37,7 +34,6 @@ A SaaS web application that provides instant insights on business viability for 
 - Node.js 18+ and npm
 - Firebase project (for authentication and database)
 - Census Bureau API key ([Get one here](https://api.census.gov/data/key_signup.html))
-- Stripe account (for Pro tier payments)
 
 ### Installation
 
@@ -56,7 +52,6 @@ npm install
    - Copy `.env.example` to `.env.local`
    - Fill in your Firebase configuration
    - Add your Census Bureau API key
-   - Add Stripe keys (if implementing Pro tier)
 
 4. Run the development server:
 ```bash
@@ -80,11 +75,6 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
 # Census Bureau API Key
 CENSUS_API_KEY=your_census_api_key
-
-# Stripe Keys (for Pro tier)
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 ```
 
 ## Firebase Setup

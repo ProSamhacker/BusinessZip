@@ -17,14 +17,6 @@ Set these in Vercel Dashboard → Settings → Environment Variables:
 **Census API (Required):**
 - `CENSUS_API_KEY`
 
-**Stripe (Optional - for Pro tier):**
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PRICE_ID`
-
-**App URL (Optional - for Stripe redirects):**
-- `NEXT_PUBLIC_APP_URL` (e.g., `https://your-app.vercel.app`)
 
 ### 2. Build Configuration
 
@@ -39,10 +31,6 @@ Set these in Vercel Dashboard → Settings → Environment Variables:
 ### 3. API Routes Review
 
 ✅ **/api/analyze** - Server-side route, uses environment variables correctly
-
-⚠️ **/api/stripe/webhook** - Needs Vercel-specific configuration for raw body
-
-✅ **/api/stripe/create-checkout** - Server-side route, properly configured
 
 ### 4. Firebase Configuration
 
@@ -64,15 +52,11 @@ Set these in Vercel Dashboard → Settings → Environment Variables:
 
 ## 🔧 Required Fixes for Vercel
 
-### Fix 1: Webhook Route Body Configuration
-
-Vercel requires special handling for webhook routes that need raw body access. The webhook route needs to be configured to accept raw body.
-
-### Fix 2: Next.js Configuration
+### Fix 1: Next.js Configuration
 
 Add runtime configuration for better Vercel compatibility.
 
-### Fix 3: Environment Variables Documentation
+### Fix 2: Environment Variables Documentation
 
 Ensure all required environment variables are documented.
 
@@ -110,16 +94,13 @@ Ensure all required environment variables are documented.
 
 ## ⚠️ Known Issues & Solutions
 
-### Issue 1: Webhook Body Parsing
-**Solution:** Vercel automatically handles raw body for webhook routes, but we need to ensure the route is configured correctly.
-
-### Issue 2: Firebase Server-Side Initialization
+### Issue 1: Firebase Server-Side Initialization
 **Solution:** Already handled - webhook route initializes Firebase separately.
 
-### Issue 3: Environment Variables
+### Issue 2: Environment Variables
 **Solution:** All environment variables must be set in Vercel Dashboard before deployment.
 
-### Issue 4: CORS Issues
+### Issue 3: CORS Issues
 **Solution:** Next.js API routes handle CORS automatically. External API calls (Census, Overpass) should work without issues.
 
 ## 🧪 Post-Deployment Testing
@@ -134,17 +115,14 @@ Ensure all required environment variables are documented.
    - Google OAuth
    - User document creation
 
-3. **Test Pro Features (if Stripe configured):**
-   - Checkout flow
-   - Webhook handling
+3. **Test All Features:**
    - Report saving
    - Map display
    - PDF download
+   - Dashboard functionality
 
 4. **Test API Routes:**
    - `/api/analyze` - Test with sample zip code
-   - `/api/stripe/create-checkout` - Test checkout creation
-   - `/api/stripe/webhook` - Test webhook (use Stripe CLI for local testing)
 
 ## 📝 Additional Notes
 

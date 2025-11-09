@@ -7,7 +7,6 @@ This guide will walk you through setting up the Local Opportunity Analyzer appli
 1. **Node.js 18+** and npm installed
 2. **Firebase Account** - Create a project at [Firebase Console](https://console.firebase.google.com/)
 3. **Census Bureau API Key** - Get one from [Census API Key Signup](https://api.census.gov/data/key_signup.html)
-4. **Stripe Account** (optional, for Pro tier) - Create at [Stripe Dashboard](https://dashboard.stripe.com/)
 
 ## Step 1: Install Dependencies
 
@@ -71,11 +70,6 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
 # Census Bureau API Key
 CENSUS_API_KEY=your_census_api_key_here
-
-# Stripe Keys (optional, for Pro tier)
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 2. Fill in all the values from your Firebase project and Census API key
@@ -101,8 +95,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    - Create an account or sign in with Google
    - Verify user document is created in Firestore
 
-3. **Test Pro Features (if implemented):**
-   - Upgrade to Pro tier (requires Stripe integration)
+3. **Test Features:**
    - Save a report
    - View saved reports in Dashboard
    - Download PDF report
@@ -150,12 +143,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    - Update environment variables in hosting platform
    - Update Firebase authorized domains
 
-2. **Set Up Stripe (for Pro tier):**
-   - Create products and prices in Stripe Dashboard
-   - Set up webhook endpoints
-   - Implement subscription management
-
-3. **Add More Features:**
+2. **Add More Features:**
    - Radius-based search
    - Email reports
    - Export to CSV

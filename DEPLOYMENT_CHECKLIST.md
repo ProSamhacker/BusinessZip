@@ -10,26 +10,12 @@
 - [ ] `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` - Set in Vercel Dashboard
 - [ ] `NEXT_PUBLIC_FIREBASE_APP_ID` - Set in Vercel Dashboard
 - [ ] `CENSUS_API_KEY` - Set in Vercel Dashboard
-- [ ] `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Set if using Stripe
-- [ ] `STRIPE_SECRET_KEY` - Set if using Stripe
-- [ ] `STRIPE_WEBHOOK_SECRET` - Set if using Stripe
-- [ ] `STRIPE_PRICE_ID` - Set if using Stripe
-- [ ] `NEXT_PUBLIC_APP_URL` - Set to your Vercel URL (optional, auto-detected)
 
 ### Firebase Configuration
 - [ ] Authentication enabled (Email/Password and Google)
 - [ ] Firestore database created
 - [ ] Security rules deployed (see `firestore.rules`)
 - [ ] Authorized domains include your Vercel domain
-
-### Stripe Configuration (if using Pro tier)
-- [ ] Stripe account created
-- [ ] Product and Price created in Stripe Dashboard
-- [ ] Webhook endpoint configured: `https://your-app.vercel.app/api/stripe/webhook`
-- [ ] Webhook events subscribed:
-  - `checkout.session.completed`
-  - `customer.subscription.updated`
-  - `customer.subscription.deleted`
 
 ### Code Review
 - [ ] All TypeScript errors resolved
@@ -71,13 +57,12 @@
 
 6. **Post-Deployment**
    - Update Firebase authorized domains with Vercel URL
-   - Update Stripe webhook URL
    - Test all functionality
    - Monitor Vercel logs for errors
 
 ## 🧪 Testing After Deployment
 
-### Free Tier
+### Features
 - [ ] Landing page loads
 - [ ] Search form works
 - [ ] Results page displays correctly
@@ -89,11 +74,7 @@
 - [ ] Google OAuth works
 - [ ] User document created in Firestore
 
-### Pro Tier (if configured)
-- [ ] Checkout button works
-- [ ] Stripe checkout redirects correctly
-- [ ] Webhook receives events
-- [ ] User upgraded to Pro
+### All Features
 - [ ] Save report works
 - [ ] Dashboard displays saved reports
 - [ ] Map displays correctly
@@ -101,8 +82,6 @@
 
 ### API Routes
 - [ ] `/api/analyze` returns data
-- [ ] `/api/stripe/create-checkout` creates session
-- [ ] `/api/stripe/webhook` processes events
 
 ## 🔍 Troubleshooting
 
@@ -121,16 +100,9 @@
 - Check Firebase console for errors
 - Verify authorized domains include Vercel URL
 
-### Stripe Webhook Not Working
-- Verify webhook URL in Stripe Dashboard
-- Check webhook secret matches
-- Review Vercel function logs
-- Test with Stripe CLI locally first
-
 ## 📊 Monitoring
 
 - **Vercel Analytics:** Enable in project settings
 - **Function Logs:** View in Vercel Dashboard → Functions
 - **Firebase Console:** Monitor Firestore and Auth usage
-- **Stripe Dashboard:** Monitor webhook events and payments
 

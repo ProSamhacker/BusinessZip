@@ -2,9 +2,6 @@ export interface User {
   docId: string;
   email: string;
   displayName: string;
-  subscriptionTier: 'free' | 'pro';
-  proStatus: 'active' | 'inactive' | 'trialing';
-  stripeCustomerId?: string;
 }
 
 export interface SearchQuery {

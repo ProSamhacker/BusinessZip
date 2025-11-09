@@ -22,7 +22,7 @@
 - [x] Auth context provider
 - [x] User document creation in Firestore
 - [x] Firestore security rules
-- [x] Stripe integration structure (checkout, webhooks)
+- [x] All features available for free
 
 ### Phase 4: Pro Features ✅
 - [x] Save reports functionality
@@ -39,9 +39,7 @@ local-opportunity-analyzer/
 ├── app/
 │   ├── api/
 │   │   ├── analyze/          # Main analysis endpoint
-│   │   └── stripe/            # Stripe checkout & webhooks
-│   ├── dashboard/             # User dashboard (Pro)
-│   ├── pricing/               # Pricing page
+│   ├── dashboard/             # User dashboard
 │   ├── results/               # Results page
 │   ├── layout.tsx             # Root layout with Navbar
 │   └── page.tsx               # Landing page
@@ -52,10 +50,8 @@ local-opportunity-analyzer/
 │   ├── Map/
 │   │   ├── CompetitorMap.tsx  # Leaflet map component
 │   │   └── CompetitorMapClient.tsx  # Dynamic wrapper
-│   ├── Navigation/
-│   │   └── Navbar.tsx         # Navigation bar
-│   └── Stripe/
-│       └── CheckoutButton.tsx # Stripe checkout button
+│   └── Navigation/
+│       └── Navbar.tsx         # Navigation bar
 ├── lib/
 │   ├── api/
 │   │   ├── census.ts          # Census Bureau API
@@ -66,8 +62,6 @@ local-opportunity-analyzer/
 │   │   └── types.ts           # TypeScript types
 │   ├── firestore/
 │   │   └── reports.ts         # Firestore report functions
-│   ├── stripe/
-│   │   └── config.ts          # Stripe config
 │   └── utils/
 │       └── pdf.ts             # PDF generation
 ├── firestore.rules            # Firestore security rules
@@ -91,12 +85,6 @@ Create `.env.local` with:
 2. **Census Bureau API Key**
    - `CENSUS_API_KEY` (get from https://api.census.gov/data/key_signup.html)
 
-3. **Stripe Configuration** (for Pro tier)
-   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-   - `STRIPE_SECRET_KEY`
-   - `STRIPE_WEBHOOK_SECRET`
-   - `STRIPE_PRICE_ID` (create in Stripe Dashboard)
-
 ### Firebase Setup
 
 1. Enable Authentication (Email/Password & Google)
@@ -104,14 +92,6 @@ Create `.env.local` with:
 3. Deploy security rules from `firestore.rules`
 4. Add authorized domains for OAuth
 
-### Stripe Setup (Optional)
-
-1. Create a product and price in Stripe Dashboard
-2. Set up webhook endpoint: `/api/stripe/webhook`
-3. Configure webhook to listen for:
-   - `checkout.session.completed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
 
 ## 🚀 Getting Started
 
@@ -133,14 +113,6 @@ Create `.env.local` with:
    - Navigate to http://localhost:3000
 
 ## 📝 Next Steps
-
-### To Complete Stripe Integration:
-
-1. Create a Stripe product and price
-2. Add `STRIPE_PRICE_ID` to `.env.local`
-3. Set up webhook endpoint in Stripe Dashboard
-4. Test checkout flow
-5. Test webhook handling
 
 ### Future Enhancements:
 
@@ -165,22 +137,19 @@ Create `.env.local` with:
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Census Bureau API](https://www.census.gov/data/developers/data-sets.html)
 - [OpenStreetMap Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API)
-- [Stripe Documentation](https://stripe.com/docs)
 
 ## 🎯 Project Status
 
 **Status:** ✅ Core Features Complete
 
 All major features from the original specification have been implemented:
-- ✅ Free tier with full functionality
+- ✅ Full functionality available for free
 - ✅ Authentication system
-- ✅ Pro tier features (maps, PDF, save reports)
-- ✅ Stripe integration structure
+- ✅ All features (maps, PDF, save reports)
 - ✅ Dashboard for saved reports
 
 The application is ready for:
 1. Testing with real API keys
-2. Stripe product setup
-3. Deployment to production
+2. Deployment to production
 4. User testing and feedback
 

@@ -132,15 +132,15 @@ export default function Home() {
 
           {/* CTA Section */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-            <h2 className="text-2xl font-bold mb-4">Ready to go Pro?</h2>
+            <h2 className="text-2xl font-bold mb-4">All Features Free!</h2>
             <p className="mb-6 opacity-90">
-              Save reports, view interactive maps, download PDFs, and more
+              Save reports, view interactive maps, download PDFs, and more - all completely free with no limitations.
             </p>
             <Link
-              href="/pricing"
+              href="/dashboard"
               className="inline-block px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition"
             >
-              Learn More
+              Get Started
             </Link>
           </div>
         </div>

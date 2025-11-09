@@ -36,11 +36,6 @@ export default function Navbar() {
                     <span className="text-sm text-gray-600">
                       {userData?.displayName || user.email}
                     </span>
-                    {userData?.subscriptionTier === 'pro' && userData?.proStatus === 'active' && (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
-                        PRO
-                      </span>
-                    )}
                     <button
                       onClick={handleSignOut}
                       className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition"

@@ -29,7 +29,6 @@ export default function ResultsPage() {
 
   const businessTerm = searchParams.get('business') || '';
   const zipCode = searchParams.get('zip') || '';
-  const isPro = userData?.subscriptionTier === 'pro' && userData?.proStatus === 'active';
 
   useEffect(() => {
     if (!businessTerm || !zipCode) {
@@ -40,14 +39,12 @@ export default function ResultsPage() {
     const fetchAnalysis = async () => {
       try {
         setIsLoading(true);
-        const currentIsPro = userData?.subscriptionTier === 'pro' && userData?.proStatus === 'active';
         const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             businessTerm,
             zipCode,
-            includeLocations: currentIsPro, // Pro tier gets locations for map
           }),
         });
 
@@ -64,8 +61,8 @@ export default function ResultsPage() {
       }
     };
 
-    fetchAnalysis();
-  }, [businessTerm, zipCode, router, userData]);
+        fetchAnalysis();
+  }, [businessTerm, zipCode, router]);
 
   if (isLoading) {
     return (
@@ -176,8 +173,8 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Pro Feature: Map */}
-        {isPro && reportData?.competitorLocations && reportData.competitorLocations.length > 0 && (
+        {/* Map */}
+        {reportData?.competitorLocations && reportData.competitorLocations.length > 0 && (
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
               Competitor Locations Map
@@ -189,13 +186,12 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {/* CTA to Sign Up or Save Report */}
+        {/* Save Report and Download PDF */}
         {!user ? (
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white text-center mb-8">
             <h2 className="text-2xl font-bold mb-3">Want to save this report?</h2>
             <p className="mb-6 opacity-90">
-              Sign up for free to save reports, compare locations, and unlock Pro features like 
-              interactive maps and PDF downloads.
+              Sign up for free to save reports, compare locations, and access all features.
             </p>
             <button
               onClick={() => setShowAuthModal(true)}
@@ -204,7 +200,7 @@ export default function ResultsPage() {
               Sign Up Free
             </button>
           </div>
-        ) : isPro && reportData ? (
+        ) : reportData ? (
           <div className="bg-white rounded-xl shadow-md p-6 mb-8 space-y-4">
             <div className="flex gap-4">
               <button
@@ -253,19 +249,6 @@ export default function ResultsPage() {
               className="block text-center text-blue-600 hover:text-blue-700 font-medium"
             >
               View All Saved Reports →
-            </Link>
-          </div>
-        ) : user && !isPro ? (
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-8 text-white text-center mb-8">
-            <h2 className="text-2xl font-bold mb-3">Upgrade to Pro</h2>
-            <p className="mb-6 opacity-90">
-              Unlock interactive maps, PDF downloads, and save unlimited reports.
-            </p>
-            <Link
-              href="/pricing"
-              className="inline-block px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-gray-100 transition"
-            >
-              Upgrade Now
             </Link>
           </div>
         ) : null}

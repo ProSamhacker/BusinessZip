@@ -82,9 +82,7 @@ export default function DashboardPage() {
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Saved Reports</h1>
           <p className="text-gray-600">
-            {userData?.subscriptionTier === 'pro' && userData?.proStatus === 'active'
-              ? 'Pro Account - All features unlocked'
-              : 'Free Account - Upgrade to Pro for more features'}
+            All features are available - save unlimited reports and access all tools.
           </p>
         </div>
 

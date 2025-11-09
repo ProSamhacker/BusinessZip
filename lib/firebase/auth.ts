@@ -25,8 +25,6 @@ export async function signUp(email: string, password: string, displayName: strin
     await setDoc(doc(db, 'users', user.uid), {
       email: user.email,
       displayName: displayName || user.displayName || '',
-      subscriptionTier: 'free',
-      proStatus: 'inactive',
       createdAt: serverTimestamp(),
     });
     
@@ -64,8 +62,6 @@ export async function signInWithGoogle() {
       await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
         displayName: user.displayName || '',
-        subscriptionTier: 'free',
-        proStatus: 'inactive',
         createdAt: serverTimestamp(),
       });
     }
