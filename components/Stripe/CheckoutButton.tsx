@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/components/Auth/AuthProvider';
 import { getStripe } from '@/lib/stripe/config';
 import AuthModal from '@/components/Auth/AuthModal';
+import type { Stripe } from '@stripe/stripe-js';
 
 interface CheckoutButtonProps {
   priceId?: string;
@@ -50,7 +51,17 @@ export default function CheckoutButton({ priceId }: CheckoutButtonProps) {
         return;
       }
 
-      await stripe.redirectToCheckout({ sessionId });
+      // redirectToCheckout exists on Stripe instance but may not be in types
+      // Using type assertion to access the method
+      type StripeWithRedirect = Stripe & {
+        redirectToCheckout: (options: { sessionId: string }) => Promise<{ error?: { message: string } }>;
+      };
+      
+      const result = await (stripe as StripeWithRedirect).redirectToCheckout({ sessionId });
+      if (result?.error) {
+        alert('Error redirecting to checkout: ' + result.error.message);
+        return;
+      }
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred. Please try again.');
