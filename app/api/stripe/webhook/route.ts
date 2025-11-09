@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, Firestore, doc, updateDoc } from 'firebase/firestore';
 
 // Initialize Firebase Admin for server-side use
 const firebaseConfig = {
@@ -13,8 +13,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-let app;
-let db;
+let app: FirebaseApp;
+let db: Firestore;
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
