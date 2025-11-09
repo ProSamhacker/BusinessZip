@@ -14,6 +14,10 @@ const googleProvider = new GoogleAuthProvider();
 
 export async function signUp(email: string, password: string, displayName: string) {
   try {
+    if (!auth || !db) {
+      return { user: null, error: 'Firebase is not initialized. This function must be called on the client side.' };
+    }
+    
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
@@ -34,6 +38,10 @@ export async function signUp(email: string, password: string, displayName: strin
 
 export async function signIn(email: string, password: string) {
   try {
+    if (!auth) {
+      return { user: null, error: 'Firebase is not initialized. This function must be called on the client side.' };
+    }
+    
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
   } catch (error: any) {
@@ -43,6 +51,10 @@ export async function signIn(email: string, password: string) {
 
 export async function signInWithGoogle() {
   try {
+    if (!auth || !db) {
+      return { user: null, error: 'Firebase is not initialized. This function must be called on the client side.' };
+    }
+    
     const userCredential = await signInWithPopup(auth, googleProvider);
     const user = userCredential.user;
     
@@ -66,6 +78,10 @@ export async function signInWithGoogle() {
 
 export async function signOut() {
   try {
+    if (!auth) {
+      return { error: 'Firebase is not initialized. This function must be called on the client side.' };
+    }
+    
     await firebaseSignOut(auth);
     return { error: null };
   } catch (error: any) {
@@ -75,6 +91,11 @@ export async function signOut() {
 
 export async function getUserData(uid: string): Promise<User | null> {
   try {
+    if (!db) {
+      console.error('Firestore is not initialized');
+      return null;
+    }
+    
     const userDoc = await getDoc(doc(db, 'users', uid));
     if (userDoc.exists()) {
       return { docId: uid, ...userDoc.data() } as User;
