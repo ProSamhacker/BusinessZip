@@ -100,3 +100,46 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string> 
   }
 }
 
+/**
+ * Reverse geocode coordinates to get a zip code.
+ * @param lat
+ *param lon
+ * @returns The 5-digit zip code, or null if not found.
+ */
+export async function reverseGeocodeToZip(lat: number, lon: number): Promise<string | null> {
+  try {
+    const nominatimUrl = 'https://nominatim.openstreetmap.org/reverse';
+
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lon: lon.toString(),
+      format: 'json',
+      addressdetails: '1', // Request address details
+    });
+
+    const response = await fetch(`${nominatimUrl}?${params.toString()}`, {
+      headers: {
+        'User-Agent': 'LocalOpportunityAnalyzer/1.0',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Reverse geocoding API returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const zipCode = data?.address?.postcode;
+
+    // Validate it's a 5-digit US zip
+    if (zipCode && /^[0-9]{5}$/.test(zipCode)) {
+      return zipCode;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error reverse geocoding to zip:', error);
+    return null;
+  }
+}
+
