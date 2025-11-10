@@ -29,9 +29,11 @@ function ResultsContent() {
 
   const businessTerm = searchParams.get('business') || '';
   const zipCode = searchParams.get('zip') || '';
+  const address = searchParams.get('address') || '';
+  const radius = searchParams.get('radius') || '';
 
   useEffect(() => {
-    if (!businessTerm || !zipCode) {
+    if (!businessTerm || (!zipCode && !address)) {
       router.push('/');
       return;
     }
@@ -42,10 +44,11 @@ function ResultsContent() {
         const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            businessTerm,
-            zipCode,
-          }),
+          body: JSON.stringify(
+            zipCode
+              ? { businessTerm, zipCode }
+              : { businessTerm, address, radiusMiles: parseFloat(radius) }
+          ),
         });
 
         if (!response.ok) {
@@ -62,7 +65,7 @@ function ResultsContent() {
     };
 
         fetchAnalysis();
-  }, [businessTerm, zipCode, router]);
+  }, [businessTerm, zipCode, address, radius, router]);
 
   if (isLoading) {
     return (
@@ -108,8 +111,16 @@ function ResultsContent() {
             Opportunity Analysis Report
           </h1>
           <p className="text-gray-600">
-            <span className="font-semibold">{businessTerm}</span> in zip code{' '}
-            <span className="font-semibold">{zipCode}</span>
+            <span className="font-semibold">{businessTerm}</span>{' '}
+            {zipCode ? (
+              <>
+                in zip code <span className="font-semibold">{zipCode}</span>
+              </>
+            ) : (
+              <>
+                near <span className="font-semibold">{address}</span>
+              </>
+            )}
           </p>
         </div>
 
@@ -207,14 +218,17 @@ function ResultsContent() {
                 onClick={async () => {
                   if (!user || !reportData) return;
                   setIsSaving(true);
-                  const reportName = `${businessTerm} in ${zipCode}`;
+                  const reportName = zipCode
+                    ? `${businessTerm} in ${zipCode}`
+                    : `${businessTerm} near ${address}`;
                   const result = await saveReport(
                     user.uid,
                     reportName,
                     {
-                      type: 'zipcode',
+                      type: zipCode ? 'zipcode' : 'radius',
                       businessTerm,
-                      value: zipCode,
+                      value: zipCode || address,
+                      radius: zipCode ? undefined : parseFloat(radius),
                     },
                     reportData
                   );
@@ -232,13 +246,22 @@ function ResultsContent() {
               </button>
               <button
                 onClick={async () => {
-                  try {
-                    const filename = `${businessTerm}-${zipCode}-report.pdf`;
-                    await downloadReportAsPDF('report-content', filename);
-                  } catch (error) {
-                    alert('Failed to download PDF. Please try again.');
-                  }
-                }}
+           try {
+              const filename = zipCode
+                ? `${businessTerm}-${zipCode}-report.pdf`
+                : `${businessTerm}-${address.replace(/\s+/g, '-')}-report.pdf`;
+                // Pass all the data directly to the PDF generator
+             await downloadReportAsPDF(
+           filename,
+           businessTerm,
+            zipCode || address,
+            reportData
+        );
+       } catch (error) {
+    console.error('PDF Download Error:', error);
+    alert('Failed to download PDF. Please try again.');
+  }
+}}
                 className="flex-1 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition"
               >
                 Download PDF
@@ -257,8 +280,8 @@ function ResultsContent() {
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           onSuccess={() => {
-            // Refresh page or update UI after successful auth
-            window.location.reload();
+            // Just close the modal. The AuthProvider will update the UI.
+           setShowAuthModal(false);
           }}
         />
 

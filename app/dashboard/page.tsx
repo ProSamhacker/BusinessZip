@@ -117,7 +117,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Location:</span>
-                    <span className="font-medium">{report.searchQuery.value}</span>
+                    <span className="font-medium">
+                      {report.searchQuery.type === 'zipcode'
+                        ? `Zip Code ${report.searchQuery.value}`
+                        : `Near ${report.searchQuery.value}`
+                      }
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Population:</span>

@@ -9,7 +9,7 @@ export default function Home() {
   const [businessTerm, setBusinessTerm] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [address, setAddress] = useState('');
-  const [radiusMiles, setRadiusMiles] = useState(1);
+  const [radiusMiles, setRadiusMiles] = useState('1');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -111,7 +111,7 @@ export default function Home() {
                   value={businessTerm}
                   onChange={(e) => setBusinessTerm(e.target.value)}
                   placeholder="e.g., Coffee Shop, Gym, Restaurant"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
                   required
                 />
               </div>
@@ -133,7 +133,7 @@ export default function Home() {
                     placeholder="e.g., 90210"
                     pattern="[0-9]{5}"
                     maxLength={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
                     required
                     spellCheck="false"
                   />
@@ -156,7 +156,7 @@ export default function Home() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="e.g., 123 Main St, New York, NY 10001"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
                       required
                     />
                     <p className="text-xs text-gray-500 mt-1">
@@ -175,11 +175,11 @@ export default function Home() {
                       id="radiusMiles"
                       type="number"
                       value={radiusMiles}
-                      onChange={(e) => setRadiusMiles(parseFloat(e.target.value) || 1)}
+                      onChange={(e) => setRadiusMiles(e.target.value)}
                       min="0.1"
                       max="50"
                       step="0.1"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
                       required
                     />
                     <p className="text-xs text-gray-500 mt-1">
