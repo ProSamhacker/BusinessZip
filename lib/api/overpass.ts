@@ -15,7 +15,6 @@ export interface CompetitorData {
   locations: CompetitorLocation[];
 }
 
-// Overpass API returns a complex object, so we define types for what we need.
 interface OverpassElement {
   type: 'node' | 'way';
   id: number;
@@ -33,26 +32,29 @@ interface OverpassResponse {
 
 const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
 
-// Maps common business terms to OpenStreetMap 'amenity' tags.
-const businessTypeMap: Record<string, string> = {
-  'coffee shop': 'cafe',
-  'coffee': 'cafe',
-  'cafe': 'cafe',
-  'restaurant': 'restaurant',
-  'gym': 'gym',
-  'fitness': 'gym',
-  'bookstore': 'books',
-  'pharmacy': 'pharmacy',
-  'drugstore': 'pharmacy',
-  'gas station': 'fuel',
-  'hotel': 'hotel',
-  'bank': 'bank',
-  'supermarket': 'supermarket',
-  'grocery store': 'supermarket',
-  'bar': 'bar',
-  'pub': 'bar',
-  'clinic': 'clinic',
-  'hospital': 'hospital',
+// *** FIX ***
+// Maps common business terms to OpenStreetMap tags.
+// The new structure is: [tagKey, tagValue]
+const businessTypeMap: Record<string, [string, string]> = {
+  'coffee shop': ['amenity', 'cafe'],
+  'coffee': ['amenity', 'cafe'],
+  'cafe': ['amenity', 'cafe'],
+  'restaurant': ['amenity', 'restaurant'],
+  'gym': ['leisure', 'fitness_centre'],
+  'fitness': ['leisure', 'fitness_centre'],
+  'fitness center': ['leisure', 'fitness_centre'],
+  'bookstore': ['shop', 'books'],
+  'pharmacy': ['amenity', 'pharmacy'],
+  'drugstore': ['amenity', 'pharmacy'],
+  'gas station': ['amenity', 'fuel'],
+  'hotel': ['tourism', 'hotel'],
+  'bank': ['amenity', 'bank'],
+  'supermarket': ['shop', 'supermarket'],
+  'grocery store': ['shop', 'supermarket'],
+  'bar': ['amenity', 'bar'],
+  'pub': ['amenity', 'bar'],
+  'clinic': ['amenity', 'clinic'],
+  'hospital': ['amenity', 'hospital'],
 };
 
 
@@ -68,11 +70,12 @@ export function milesToMeters(miles: number): number {
 }
 
 /**
- * Performs a fuzzy search to find the best OSM amenity tag for a given business term.
- * @param term - The user-provided business term (e.g., "coffee place").
- * @returns The corresponding OSM amenity tag (e.g., "cafe") or a normalized version of the term.
+ * *** FIX ***
+ * Performs a fuzzy search to find the best OSM tag [key, value] for a given business term.
+ * @param term - The user-provided business term (e.g., "gym").
+ * @returns The corresponding OSM tag pair (e.g., ["leisure", "fitness_centre"]).
  */
-function getAmenityTag(businessTerm: string): string {
+function getOsmTag(businessTerm: string): [string, string] {
   const normalized = businessTerm.toLowerCase().trim();
   
   // 1. Exact match
@@ -80,15 +83,15 @@ function getAmenityTag(businessTerm: string): string {
     return businessTypeMap[normalized];
   }
 
-  // 2. Partial match (e.g., "coffee" in "coffee shop")
+  // 2. Partial match (e.g., "coffee" in "my coffee place")
   for (const [key, value] of Object.entries(businessTypeMap)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
+    if (normalized.includes(key)) {
       return value;
     }
   }
 
-  // 3. Fallback to the normalized term itself
-  return normalized;
+  // 3. Fallback to assuming 'amenity'
+  return ['amenity', normalized];
 }
 
 /**
@@ -103,7 +106,6 @@ function parseCompetitorLocations(elements: OverpassElement[]): CompetitorLocati
         return { lat: element.lat, lon: element.lon };
       }
       if (element.type === 'way' && element.geometry && element.geometry.length > 0) {
-        // Use the first coordinate for a 'way' (e.g., a building outline)
         return { lat: element.geometry[0].lat, lon: element.geometry[0].lon };
       }
       return null;
@@ -148,14 +150,16 @@ export async function getCompetitorDataByRadius(
   businessTerm: string
 ): Promise<CompetitorData> {
   try {
-    const amenity = getAmenityTag(businessTerm);
+    // *** FIX ***
+    const [tagKey, tagValue] = getOsmTag(businessTerm);
     
-    // This query finds all nodes and ways with the specified amenity tag within the given radius.
+    // *** FIX ***
+    // This query now uses the dynamic tagKey instead of hard-coding 'amenity'
     const query = `
       [out:json];
       (
-        node["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
-        way["amenity"="${amenity}"](around:${radiusMeters},${lat},${lon});
+        node["${tagKey}"="${tagValue}"](around:${radiusMeters},${lat},${lon});
+        way["${tagKey}"="${tagValue}"](around:${radiusMeters},${lat},${lon});
       );
       out geom;
     `;
@@ -185,7 +189,8 @@ export async function getCompetitorData(
   businessTerm: string
 ): Promise<CompetitorData> {
   try {
-    const amenity = getAmenityTag(businessTerm);
+    // *** FIX ***
+    const [tagKey, tagValue] = getOsmTag(businessTerm);
 
     // 1. Find the official "area" ID for the given zip code from OpenStreetMap.
     const areaQuery = `
@@ -200,16 +205,17 @@ export async function getCompetitorData(
       return { count: 0, locations: [] };
     }
     
-    // The area ID needs to be increased by this specific number for use in subsequent queries.
     const areaId = areaData.elements[0].id + 3600000000;
 
     // 2. Find all competitors within that specific area.
+    // *** FIX ***
+    // This query now uses the dynamic tagKey instead of hard-coding 'amenity'
     const competitorQuery = `
       [out:json];
       area(${areaId});
       (
-        node["amenity"="${amenity}"](area);
-        way["amenity"="${amenity}"](area);
+        node["${tagKey}"="${tagValue}"](area);
+        way["${tagKey}"="${tagValue}"](area);
       );
       out geom;
     `;
@@ -225,5 +231,3 @@ export async function getCompetitorData(
     throw new Error('Failed to fetch competitor data from Overpass API.');
   }
 }
-
-
