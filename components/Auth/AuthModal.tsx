@@ -43,7 +43,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         setPassword('');
         setDisplayName('');
       }
-    } catch (err) {
+    } catch (error) {
       setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -62,7 +62,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         onSuccess();
         onClose();
       }
-    } catch (err) {
+    } catch (error) {
       setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);

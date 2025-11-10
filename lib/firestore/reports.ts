@@ -32,8 +32,8 @@ export async function saveReport(
     });
 
     return { success: true, docId: docRef.id };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }
 }
 
@@ -69,8 +69,8 @@ export async function deleteReport(reportId: string): Promise<{ success: boolean
     
     await deleteDoc(doc(db, 'savedReports', reportId));
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }
 }
 

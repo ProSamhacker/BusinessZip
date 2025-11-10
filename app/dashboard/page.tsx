@@ -9,11 +9,19 @@ import Link from 'next/link';
 import AuthModal from '@/components/Auth/AuthModal';
 
 export default function DashboardPage() {
-  const { user, userData, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const loadReports = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    const userReports = await getUserReports(user.uid);
+    setReports(userReports);
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -24,14 +32,6 @@ export default function DashboardPage() {
       }
     }
   }, [user, loading]);
-
-  const loadReports = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    const userReports = await getUserReports(user.uid);
-    setReports(userReports);
-    setIsLoading(false);
-  };
 
   const handleDelete = async (reportId: string) => {
     if (!confirm('Are you sure you want to delete this report?')) return;

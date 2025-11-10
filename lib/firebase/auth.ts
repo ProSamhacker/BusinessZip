@@ -4,7 +4,6 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut as firebaseSignOut,
-  User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './config';
@@ -29,8 +28,8 @@ export async function signUp(email: string, password: string, displayName: strin
     });
     
     return { user, error: null };
-  } catch (error: any) {
-    return { user: null, error: error.message };
+  } catch (error) {
+    return { user: null, error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }
 }
 
@@ -42,8 +41,8 @@ export async function signIn(email: string, password: string) {
     
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
-  } catch (error: any) {
-    return { user: null, error: error.message };
+  } catch (error) {
+    return { user: null, error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }
 }
 
@@ -67,8 +66,8 @@ export async function signInWithGoogle() {
     }
     
     return { user, error: null };
-  } catch (error: any) {
-    return { user: null, error: error.message };
+  } catch (error) {
+    return { user: null, error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }
 }
 
@@ -80,8 +79,8 @@ export async function signOut() {
     
     await firebaseSignOut(auth);
     return { error: null };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }
 }
 

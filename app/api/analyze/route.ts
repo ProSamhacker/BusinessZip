@@ -10,18 +10,18 @@ interface CacheEntry<T> {
   timestamp: number;
 }
 
-const cache = new Map<string, CacheEntry<any>>();
+const cache = new Map<string, CacheEntry<unknown>>();
 const CACHE_TTL = 3600 * 1000; // 1 hour in milliseconds
 
 function getCached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   const entry = cache.get(key);
   const now = Date.now();
-  
+
   // Check if cache entry exists and is still valid
   if (entry && (now - entry.timestamp) < CACHE_TTL) {
-    return Promise.resolve(entry.data);
+    return Promise.resolve(entry.data as T);
   }
-  
+
   // Fetch new data and cache it
   return fetcher().then(data => {
     cache.set(key, { data, timestamp: now });
@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine search type: radius-based (address) or zip code
-    let censusData: any;
-    let competitorData: any;
+    let censusData: { population: number; medianIncome: number };
+    let competitorData: { count: number; locations: Array<{ lat: number; lon: number }> };
     let searchLocation: string;
     let coordinates: { lat: number; lon: number } | null = null;
 

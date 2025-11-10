@@ -20,7 +20,7 @@ interface ReportData {
 function ResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, userData } = useAuth();
+  const { user } = useAuth();
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
