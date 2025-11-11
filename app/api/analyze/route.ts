@@ -6,9 +6,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // --- ADD GEMINI INIT ---
 let genAI: GoogleGenerativeAI | null = null;
-if (process.env.GEMINI_API_KEY) {
+if (process.env.GEMINI_API_KEY_SUMMARY) {
   try {
-    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_SUMMARY);
   } catch (error) {
     console.error("Failed to initialize Gemini AI:", error);
   }
@@ -57,7 +57,7 @@ async function getGeminiSummary(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt = `
       You are a professional business consultant. Provide a brief, 2-3 sentence "Executive Summary"
       for a client exploring a new business. Be encouraging but realistic.
