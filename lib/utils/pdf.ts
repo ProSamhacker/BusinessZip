@@ -38,7 +38,7 @@ export async function downloadReportAsPDF(
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     
-    // Population
+    // Populations
     pdf.text('Total Population:', margin, yPos);
     pdf.setFont('helvetica', 'normal');
     pdf.text(reportData.population.toLocaleString(), margin + 60, yPos);
