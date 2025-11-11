@@ -252,13 +252,140 @@ function ResultsContent() {
         </div>
         {/* --- END UPDATE --- */}
 
-        {/* ... (keep Map section) ... */}
+        {/* Map */}
+        {reportData?.competitorLocations && reportData.competitorLocations.length > 0 && (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              Competitor Locations Map
+            </h2>
+            <CompetitorMap
+              locations={reportData.competitorLocations}
+              businessTerm={businessTerm}
+            />
+          </div>
+        )}
 
-        {/* ... (keep Save Report section, it's already updated) ... */}
+        {/* Save Report and Download PDF */}
+        {!user ? (
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white text-center mb-8">
+            <h2 className="text-2xl font-bold mb-3">Want to save this report?</h2>
+            <p className="mb-6 opacity-90">
+              Sign up for free to save reports, compare locations, and access all features.
+            </p>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition"
+            >
+              Sign Up Free
+            </button>
+          </div>
+        ) : reportData ? (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8 space-y-4">
+            <div className="flex gap-4">
+              <button
+                onClick={async () => {
+                  if (!user || !reportData) return;
+                  setIsSaving(true);
+                  const reportName = zipCode
+                    ? `${businessTerm} in ${zipCode}`
+                    : `${businessTerm} near ${address}`;
+                  const result = await saveReport(
+                    user.uid,
+                    reportName,
+                    {
+                      type: zipCode ? 'zipcode' : 'radius',
+                      businessTerm,
+                      value: zipCode || address,
+                      radius: zipCode ? undefined : parseFloat(radius),
+                    },
+                    reportData
+                  );
+                  if (result.success) {
+                    alert('Report saved successfully!');
+                  } else {
+                    alert('Failed to save report: ' + result.error);
+                  }
+                  setIsSaving(false);
+                }}
+                disabled={isSaving}
+                className="flex-1 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? 'Saving...' : 'Save Report'}
+              </button>
+              <button
+                onClick={async () => {
+           try {
+              const filename = zipCode
+                ? `${businessTerm}-${zipCode}-report.pdf`
+                : `${businessTerm}-${address.replace(/\s+/g, '-')}-report.pdf`;
+                // Pass all the data directly to the PDF generator
+             await downloadReportAsPDF(
+           filename,
+           businessTerm,
+            zipCode || address,
+            reportData
+        );
+       } catch (error) {
+    console.error('PDF Download Error:', error);
+    alert('Failed to download PDF. Please try again.');
+  }
+}}
+                className="flex-1 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition"
+              >
+                Download PDF
+              </button>
+            </div>
+            <Link
+              href="/dashboard"
+              className="block text-center text-blue-600 hover:text-blue-700 font-medium"
+            >
+              View All Saved Reports →
+            </Link>
+          </div>
+        ) : null}
 
-        {/* ... (keep AuthModal) ... */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            // Just close the modal. The AuthProvider will update the UI.
+           setShowAuthModal(false);
+          }}
+        />
 
-        {/* ... (keep Affiliate Links section) ... */}
+        {/* Affiliate Links Section */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Next Steps</h2>
+          <div className="space-y-3">
+            <a
+              href="https://www.legalzoom.com/business/llc/llc-overview.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+            >
+              <div className="font-semibold text-gray-900">Incorporate Your LLC</div>
+              <div className="text-sm text-gray-600">Protect your personal assets and establish your business</div>
+            </a>
+            <a
+              href="https://www.namecheap.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+            >
+              <div className="font-semibold text-gray-900">Get a Domain Name</div>
+              <div className="text-sm text-gray-600">Secure your online presence with a professional domain</div>
+            </a>
+            <a
+              href="https://squareup.com/us/en/point-of-sale"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+            >
+              <div className="font-semibold text-gray-900">Set Up Point of Sale</div>
+              <div className="text-sm text-gray-600">Accept payments and manage your business</div>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
