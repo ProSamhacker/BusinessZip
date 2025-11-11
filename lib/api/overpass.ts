@@ -81,7 +81,7 @@ export function milesToMeters(miles: number): number {
  */
 async function getTagFromGemini(term: string): Promise<[string, string]> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     const prompt = `
       You are an expert in OpenStreetMap. A user is searching for a business.
       Convert their search term into the single most accurate OSM tag.

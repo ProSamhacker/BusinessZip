@@ -57,7 +57,7 @@ async function getGeminiSummary(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     const prompt = `
       You are a professional business consultant. Provide a brief, 2-3 sentence "Executive Summary"
       for a client exploring a new business. Be encouraging but realistic.
