@@ -3,6 +3,8 @@
  * Fetches competitor data for a given location and business type.
  */
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 // --- TYPE DEFINITIONS ---
 
 export interface CompetitorLocation {
@@ -31,6 +33,9 @@ interface OverpassResponse {
 // --- CONFIGURATION ---
 
 const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
+
+// Gemini API setup
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // *** FIX ***
 // Maps common business terms to OpenStreetMap tags.
@@ -70,28 +75,70 @@ export function milesToMeters(miles: number): number {
 }
 
 /**
+ * Calls Gemini API to get OSM tag for unknown business terms.
+ * @param term - The business term to query.
+ * @returns Promise resolving to OSM tag pair.
+ */
+async function getTagFromGemini(term: string): Promise<[string, string]> {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const prompt = `
+      You are an expert in OpenStreetMap. A user is searching for a business.
+      Convert their search term into the single most accurate OSM tag.
+      Return ONLY a JSON object with "key" and "value".
+      User term: "${term}"
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Clean up the response, which might have markdown ```json
+    const jsonText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const tag = JSON.parse(jsonText);
+
+    // Basic validation
+    if (tag.key && tag.value) {
+      return [tag.key, tag.value];
+    }
+
+    // Fallback if JSON is not as expected
+    return ['amenity', term.toLowerCase()];
+
+  } catch (error) {
+    console.error("Gemini API call failed:", error);
+    // Fallback if API fails
+    return ['amenity', term.toLowerCase()];
+  }
+}
+
+/**
  * *** FIX ***
  * Performs a fuzzy search to find the best OSM tag [key, value] for a given business term.
+ * Uses hybrid approach: fast local dictionary first, then Gemini API as fallback.
  * @param term - The user-provided business term (e.g., "gym").
- * @returns The corresponding OSM tag pair (e.g., ["leisure", "fitness_centre"]).
+ * @returns Promise resolving to the corresponding OSM tag pair (e.g., ["leisure", "fitness_centre"]).
  */
-function getOsmTag(businessTerm: string): [string, string] {
+async function getOsmTag(businessTerm: string): Promise<[string, string]> {
   const normalized = businessTerm.toLowerCase().trim();
-  
-  // 1. Exact match
+
+  // 1. Exact match (FAST PATH)
   if (businessTypeMap[normalized]) {
     return businessTypeMap[normalized];
   }
 
-  // 2. Partial match (e.g., "coffee" in "my coffee place")
+  // 2. Partial match (FAST PATH)
   for (const [key, value] of Object.entries(businessTypeMap)) {
     if (normalized.includes(key)) {
       return value;
     }
   }
 
-  // 3. Fallback to assuming 'amenity'
-  return ['amenity', normalized];
+  // 3. No match? Call Gemini (SMART PATH)
+  console.log(`No local match for ${businessTerm}, querying Gemini...`);
+  const geminiTag = await getTagFromGemini(normalized);
+
+  return geminiTag;
 }
 
 /**
@@ -151,7 +198,7 @@ export async function getCompetitorDataByRadius(
 ): Promise<CompetitorData> {
   try {
     // *** FIX ***
-    const [tagKey, tagValue] = getOsmTag(businessTerm);
+    const [tagKey, tagValue] = await getOsmTag(businessTerm);
     
     // *** FIX ***
     // This query now uses the dynamic tagKey instead of hard-coding 'amenity'
@@ -190,7 +237,7 @@ export async function getCompetitorData(
 ): Promise<CompetitorData> {
   try {
     // *** FIX ***
-    const [tagKey, tagValue] = getOsmTag(businessTerm);
+    const [tagKey, tagValue] = await getOsmTag(businessTerm);
 
     // 1. Find the official "area" ID for the given zip code from OpenStreetMap.
     const areaQuery = `

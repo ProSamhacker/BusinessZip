@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase/config';
 import { getUserData } from '@/lib/firebase/auth';
 import { User } from '@/lib/firebase/types';
 
@@ -30,16 +31,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-
       if (firebaseUser) {
-        // Fetch user data from Firestore
+        // User is signed in.
+        setUser(firebaseUser);
+
+        // Check if user doc exists.
         const data = await getUserData(firebaseUser.uid);
-        setUserData(data);
+
+        if (data) {
+          // User exists, set their data.
+          setUserData(data);
+        } else {
+          // User is NEW. Create their document.
+          if (!db) {
+            console.error('Firestore is not initialized');
+            return;
+          }
+          try {
+            const newUserDoc = {
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName || '',
+              createdAt: serverTimestamp(), // Make sure serverTimestamp is imported from 'firebase/firestore'
+            };
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUserDoc);
+            setUserData({
+              docId: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              displayName: firebaseUser.displayName || '',
+            });
+          } catch (error) {
+            console.error("Failed to create user document:", error);
+            // Handle error (e.g., sign out the user)
+          }
+        }
       } else {
+        // User is signed out.
+        setUser(null);
         setUserData(null);
       }
-
       setLoading(false);
     });
 

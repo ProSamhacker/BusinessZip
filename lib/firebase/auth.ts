@@ -48,24 +48,14 @@ export async function signIn(email: string, password: string) {
 
 export async function signInWithGoogle() {
   try {
-    if (!auth || !db) {
+    if (!auth) {
       return { user: null, error: 'Firebase is not initialized. This function must be called on the client side.' };
     }
-    
+
+    // The modal's ONLY job is to trigger the popup.
     const userCredential = await signInWithPopup(auth, googleProvider);
-    const user = userCredential.user;
-    
-    // Check if user document exists, create if not
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (!userDoc.exists()) {
-      await setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        displayName: user.displayName || '',
-        createdAt: serverTimestamp(),
-      });
-    }
-    
-    return { user, error: null };
+    return { user: userCredential.user, error: null };
+
   } catch (error) {
     return { user: null, error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }

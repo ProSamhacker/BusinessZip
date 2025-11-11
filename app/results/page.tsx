@@ -199,7 +199,7 @@ function ResultsContent() {
 
         {/* Save Report and Download PDF */}
         {!user ? (
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white text-center mb-8">
+          <div className="bg-linear-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white text-center mb-8">
             <h2 className="text-2xl font-bold mb-3">Want to save this report?</h2>
             <p className="mb-6 opacity-90">
               Sign up for free to save reports, compare locations, and access all features.
