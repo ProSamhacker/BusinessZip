@@ -22,11 +22,16 @@ export async function saveReport(
     if (!db) {
       return { success: false, error: 'Firestore is not initialized. This function must be called on the client side.' };
     }
-    
+
+    // Clean searchQuery to remove undefined fields, as Firestore doesn't allow undefined values
+    const cleanSearchQuery = Object.fromEntries(
+      Object.entries(searchQuery).filter(([_, value]) => value !== undefined)
+    );
+
     const docRef = await addDoc(collection(db, 'savedReports'), {
       userId,
       reportName,
-      searchQuery,
+      searchQuery: cleanSearchQuery,
       reportData,
       createdAt: serverTimestamp(),
     });
