@@ -113,11 +113,11 @@ export default function DashboardPage() {
                 <div className="space-y-2 mb-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Business:</span>
-                    <span className="font-medium">{report.searchQuery.businessTerm}</span>
+                    <span className="font-medium text-gray-900">{report.searchQuery.businessTerm}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Location:</span>
-                    <span className="font-medium">
+                    <span className="font-medium text-gray-900">
                       {report.searchQuery.type === 'zipcode'
                         ? `Zip Code ${report.searchQuery.value}`
                         : `Near ${report.searchQuery.value}`
@@ -126,17 +126,17 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Population:</span>
-                    <span className="font-medium">
+                    <span className="font-medium text-gray-900">
                       {report.reportData.population.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Competitors:</span>
-                    <span className="font-medium">{report.reportData.competitorCount}</span>
+                    <span className="text-gray-600 ">Competitors:</span>
+                    <span className="font-medium text-gray-900">{report.reportData.competitorCount}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Score:</span>
-                    <span className="font-medium">{report.reportData.opportunityScore}</span>
+                    <span className="font-medium text-gray-900" >{report.reportData.opportunityScore}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
