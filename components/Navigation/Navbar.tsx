@@ -12,6 +12,7 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     await signOut();
+    window.location.href = '/'; // <-- ADD THIS LINE
   };
 
   return (
@@ -20,9 +21,9 @@ export default function Navbar() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700">
-              Local Opportunity Analyzer
+              BusinessZip
             </Link>
-            
+
             <div className="flex items-center gap-4">
               {user ? (
                 <>
@@ -56,7 +57,7 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
-      
+
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -65,4 +66,3 @@ export default function Navbar() {
     </>
   );
 }
-

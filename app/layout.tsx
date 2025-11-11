@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Local Opportunity Analyzer - Is Your Business Idea a Goldmine?",
+  title: "BusinessZip - Market Research for US Zip Codes",
   description: "Get instant insights on market opportunity, competition, and demographics for any US zip code. Make data-driven decisions before you invest.",
 };
 

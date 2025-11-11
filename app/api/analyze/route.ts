@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCensusData } from '@/lib/api/census';
 import { getCompetitorDataByRadius, milesToMeters } from '@/lib/api/overpass';
 import { geocodeAddress, reverseGeocodeToZip } from '@/lib/api/geocoding';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// --- ADD GEMINI INIT ---
+let genAI: GoogleGenerativeAI | null = null;
+if (process.env.GEMINI_API_KEY) {
+  try {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  } catch (error) {
+    console.error("Failed to initialize Gemini AI:", error);
+  }
+}
+// --- END ADD ---
 
 // Simple in-memory cache for API responses
 // This prevents rate limiting by caching responses for 1 hour
@@ -29,11 +41,53 @@ function getCached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   });
 }
 
+// --- ADD GEMINI HELPER FUNCTION ---
+async function getGeminiSummary(
+  businessTerm: string,
+  data: {
+    population: number;
+    medianIncome: number;
+    competitorCount: number;
+    opportunityScore: string;
+  }
+): Promise<string> {
+  if (!genAI) {
+    console.log("Gemini API key not configured. Skipping AI summary.");
+    return "AI summary generation is not configured.";
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const prompt = `
+      You are a professional business consultant. Provide a brief, 2-3 sentence "Executive Summary"
+      for a client exploring a new business. Be encouraging but realistic.
+
+      Business Idea: "${businessTerm}"
+
+      Market Data:
+      - Population in area: ${data.population.toLocaleString()}
+      - Median Household Income: $${data.medianIncome.toLocaleString()}
+      - Competitors found: ${data.competitorCount}
+      - Opportunity Score: ${data.opportunityScore}
+
+      Generate the summary.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error("Error generating Gemini summary:", error);
+    return "Failed to generate AI summary. The market data is still available below.";
+  }
+}
+// --- END ADD ---
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { businessTerm, zipCode, address, radiusMiles } = body;
-    
+
     // Validate business term (required for both search types)
     if (!businessTerm) {
       return NextResponse.json(
@@ -139,12 +193,12 @@ export async function POST(request: NextRequest) {
         )
       ),
     ]);
-    
+
     // Calculate opportunity score with improved algorithm
     const competitorCount = competitorData.count || 0;
     const population = censusData.population || 0;
     const medianIncome = censusData.medianIncome || 0;
-    
+
     // --- OPPORTUNITY SCORE (UNIFIED) ---
     let opportunityScore = 'N/A';
     let opportunityValue = 0; // For sorting/comparison
@@ -160,10 +214,40 @@ export async function POST(request: NextRequest) {
       opportunityScore = 'No competitors found';
       opportunityValue = population > 10000 ? 100000 : population * 10; // Use a large value
     }
-    
+
+    // --- NEW LOGIC (Before the return) ---
+    // Add new data fields for professional analysis
+    let incomeLevel = 'Average';
+    if (medianIncome > 100000) incomeLevel = 'High';
+    else if (medianIncome < 50000) incomeLevel = 'Low';
+
+    let marketSaturation = 'Balanced';
+    if (competitorCount === 0 && population > 5000) marketSaturation = 'Underserved';
+    else if (opportunityValue < 1000 && competitorCount > 0) marketSaturation = 'Saturated'; // 1 per <1000 residents is tough
+
+    // Mock US Average data for charts
+    const usAverageIncome = 74580; // US Median Income 2022
+    const usAveragePopulation = 33000; // Approx. population in a 2-mile radius
+
+    const incomeData = [
+      { name: 'Income', 'Your Location': medianIncome, 'US Average': usAverageIncome },
+    ];
+    const populationData = [
+      { name: 'Population', 'Your Location': population, 'US Average': usAveragePopulation },
+    ];
+
+    // Generate Gemini Summary
+    const geminiSummary = await getGeminiSummary(trimmedBusinessTerm, {
+      population,
+      medianIncome,
+      competitorCount,
+      opportunityScore,
+    });
+    // --- END NEW LOGIC ---
+
     const reportData = {
-      population: censusData.population,
-      medianIncome: censusData.medianIncome,
+      population,
+      medianIncome,
       competitorCount,
       opportunityScore,
       opportunityValue,
@@ -171,17 +255,24 @@ export async function POST(request: NextRequest) {
       searchLocation,
       coordinates,
       searchType: address ? 'radius' : 'zipcode',
+      // --- ADD NEW FIELDS TO RESPONSE ---
+      geminiSummary,
+      incomeLevel,
+      marketSaturation,
+      incomeData,
+      populationData,
+      // --- END ADD ---
     };
-    
+
     return NextResponse.json(reportData);
   } catch (error) {
     console.error('Error in analyze route:', error);
-    
+
     // Provide more specific error messages
-    const errorMessage = error instanceof Error 
-      ? error.message 
+    const errorMessage = error instanceof Error
+      ? error.message
       : 'Failed to analyze location';
-    
+
     // Check if it's a known error type
     if (errorMessage.includes('census')) {
       return NextResponse.json(
@@ -189,18 +280,17 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     if (errorMessage.includes('Overpass') || errorMessage.includes('competitor')) {
       return NextResponse.json(
         { error: 'Unable to fetch competitor data. The service may be temporarily unavailable.' },
         { status: 500 }
       );
     }
-    
+
     return NextResponse.json(
       { error: errorMessage || 'Failed to analyze location. Please try again.' },
       { status: 500 }
     );
   }
 }
-

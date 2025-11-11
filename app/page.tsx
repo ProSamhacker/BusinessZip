@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BarChart, Map, BrainCircuit, Users } from 'lucide-react'; // <-- ADD ICONS
 
 export default function Home() {
   const [searchType, setSearchType] = useState<'zipcode' | 'radius'>('zipcode');
@@ -15,24 +16,24 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!businessTerm.trim()) {
       alert('Please enter a business type');
       return;
     }
-    
+
     if (searchType === 'zipcode' && !zipCode.trim()) {
       alert('Please enter a zip code');
       return;
     }
-    
+
     if (searchType === 'radius' && !address.trim()) {
       alert('Please enter an address');
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       if (searchType === 'zipcode') {
         // Navigate to results page with zip code query params
@@ -50,22 +51,31 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    // --- UPDATED: Add gradient animation class ---
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 animate-gradient-bg">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
           {/* Hero Section */}
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <div className="flex justify-center items-center gap-4 mb-6">
+            {/* --- ADD LOGO --- */}
+            <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
+              <BarChart size={32} className="text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">BusinessZip</h1>
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight"> {/* <-- CHANGED to h2 */}
             Is your business idea a{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
               goldmine
             </span>{' '}
             or a{' '}
             <span className="text-red-600">sinkhole?</span>
-          </h1>
-          
+          </h2>
+
           <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-            Get instant insights on market opportunity, competition, and demographics 
-            for any US location. Make data-driven decisions before you invest.
+            Get instant AI-powered insights on market opportunity, competition, and demographics
+            for any US location. Make data-driven decisions.
           </p>
 
           {/* Search Form */}
@@ -99,8 +109,8 @@ export default function Home() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Business Type - Always shown */}
               <div>
-                <label 
-                  htmlFor="businessTerm" 
+                <label
+                  htmlFor="businessTerm"
                   className="block text-sm font-semibold text-gray-700 mb-2"
                 >
                   Business Type
@@ -119,8 +129,8 @@ export default function Home() {
               {/* Zip Code Search */}
               {searchType === 'zipcode' && (
                 <div>
-                  <label 
-                    htmlFor="zipCode" 
+                  <label
+                    htmlFor="zipCode"
                     className="block text-sm font-semibold text-gray-700 mb-2"
                   >
                     Zip Code
@@ -144,8 +154,8 @@ export default function Home() {
               {searchType === 'radius' && (
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label 
-                      htmlFor="address" 
+                    <label
+                      htmlFor="address"
                       className="block text-sm font-semibold text-gray-700 mb-2"
                     >
                       Address
@@ -163,10 +173,10 @@ export default function Home() {
                       Enter a full address for best results
                     </p>
                   </div>
-                  
+
                   <div>
-                    <label 
-                      htmlFor="radiusMiles" 
+                    <label
+                      htmlFor="radiusMiles"
                       className="block text-sm font-semibold text-gray-700 mb-2"
                     >
                       Radius (miles)
@@ -188,7 +198,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              
+
               <button
                 type="submit"
                 disabled={isLoading}
@@ -199,32 +209,33 @@ export default function Home() {
             </form>
           </div>
 
-          {/* Features Preview */}
+          {/* --- UPDATED: Features Preview --- */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             <div className="bg-white p-6 rounded-xl shadow-md">
-              <div className="text-3xl mb-3">📊</div>
-              <h3 className="font-semibold text-gray-900 mb-2">Market Data</h3>
+              <div className="text-3xl mb-3"><Users size={32} className="text-blue-600" /></div>
+              <h3 className="font-semibold text-gray-900 mb-2">Market Demographics</h3>
               <p className="text-gray-600 text-sm">
-                Real demographic data from the U.S. Census Bureau
+                Real population & income data from the U.S. Census Bureau.
               </p>
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow-md">
-              <div className="text-3xl mb-3">🏪</div>
+              <div className="text-3xl mb-3"><Map size={32} className="text-orange-600" /></div>
               <h3 className="font-semibold text-gray-900 mb-2">Competition Analysis</h3>
               <p className="text-gray-600 text-sm">
-                See how many competitors exist in your target area
+                View competitor counts and locations from OpenStreetMap.
               </p>
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow-md">
-              <div className="text-3xl mb-3">💡</div>
-              <h3 className="font-semibold text-gray-900 mb-2">Opportunity Score</h3>
+              <div className="text-3xl mb-3"><BrainCircuit size={32} className="text-purple-600" /></div>
+              <h3 className="font-semibold text-gray-900 mb-2">AI-Powered Insights</h3>
               <p className="text-gray-600 text-sm">
-                Get an instant assessment of market potential
+                Get an executive summary from Gemini AI to guide your decision.
               </p>
             </div>
           </div>
+          {/* --- END UPDATE --- */}
 
           {/* CTA Section */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
