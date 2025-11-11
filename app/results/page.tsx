@@ -6,28 +6,11 @@ import Link from 'next/link';
 import { useAuth } from '@/components/Auth/AuthProvider';
 import AuthModal from '@/components/Auth/AuthModal';
 import { saveReport } from '@/lib/firestore/reports';
+import { ReportData } from '@/lib/firebase/types';
 import CompetitorMap from '@/components/Map/CompetitorMapClient';
 import { downloadReportAsPDF } from '@/lib/utils/pdf';
 import { Bot, BarChart2, TrendingUp, Users, DollarSign, AlertTriangle } from 'lucide-react'; // <-- ADD ICONS
 import ReportCharts from '@/components/Charts/ReportCharts'; // <-- ADD CHART IMPORT
-
-// --- UPDATE ReportData INTERFACE ---
-interface ReportData {
-  population: number;
-  medianIncome: number;
-  competitorCount: number;
-  opportunityScore: string;
-  competitorLocations?: Array<{ lat: number; lon: number }>;
-  geminiSummary: string;
-  incomeLevel: string;
-  marketSaturation: string;
-  incomeData: { name: string; 'Your Location': number; 'US Average': number }[];
-  populationData: { name: string; 'Your Location': number; 'US Average': number }[];
-  searchLocation: string; // <-- Add this
-  opportunityValue?: number; // <-- Add this
-  searchType?: 'zipcode' | 'radius'; // <-- Add this
-}
-// --- END UPDATE ---
 
 function ResultsContent() {
   const searchParams = useSearchParams();

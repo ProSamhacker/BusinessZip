@@ -20,24 +20,39 @@ export async function saveReport(
 ): Promise<{ success: boolean; error?: string; docId?: string }> {
   try {
     if (!db) {
+      console.error('saveReport: Firestore is not initialized');
       return { success: false, error: 'Firestore is not initialized. This function must be called on the client side.' };
     }
+
+    console.log('saveReport: Starting save operation', { userId, reportName });
 
     // Clean searchQuery to remove undefined fields, as Firestore doesn't allow undefined values
     const cleanSearchQuery = Object.fromEntries(
       Object.entries(searchQuery).filter(([_, value]) => value !== undefined)
     );
 
+    // Clean reportData to remove undefined fields, as Firestore doesn't allow undefined values
+    const cleanReportData = Object.fromEntries(
+      Object.entries(reportData).filter(([_, value]) => value !== undefined)
+    );
+
+    console.log('saveReport: Cleaned data prepared', {
+      searchQuery: cleanSearchQuery,
+      reportDataKeys: Object.keys(cleanReportData)
+    });
+
     const docRef = await addDoc(collection(db, 'savedReports'), {
       userId,
       reportName,
       searchQuery: cleanSearchQuery,
-      reportData,
+      reportData: cleanReportData,
       createdAt: serverTimestamp(),
     });
 
+    console.log('saveReport: Successfully saved report', { docId: docRef.id });
     return { success: true, docId: docRef.id };
   } catch (error) {
+    console.error('saveReport: Error saving report', error);
     return { success: false, error: error instanceof Error ? error.message : 'An unexpected error occurred' };
   }
 }

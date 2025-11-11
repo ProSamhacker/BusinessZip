@@ -22,6 +22,11 @@ export interface ReportData {
   searchLocation?: string; // The location that was searched
   coordinates?: { lat: number; lon: number } | null; // For radius searches
   searchType?: 'zipcode' | 'radius'; // Track search type
+  geminiSummary: string; // AI-generated executive summary
+  incomeLevel: string; // High, Average, or Low income area
+  marketSaturation: string; // Underserved, Balanced, or Saturated market
+  incomeData: { name: string; 'Your Location': number; 'US Average': number }[]; // Chart data
+  populationData: { name: string; 'Your Location': number; 'US Average': number }[]; // Chart data
 }
 
 export interface SavedReport {
